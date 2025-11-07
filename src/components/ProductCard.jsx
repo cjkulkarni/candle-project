@@ -4,13 +4,11 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
+import { cardVariant } from '@/utils/motionVariants';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const cardVariant = {
-  hidden: { opacity: 0, y: 40 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-};
+
 
   return (
     <motion.div
