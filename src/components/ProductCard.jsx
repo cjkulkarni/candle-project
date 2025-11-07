@@ -2,13 +2,19 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const cardVariant = {
+  hidden: { opacity: 0, y: 40 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+};
 
   return (
-    <div
+    <motion.div
+      variants={cardVariant}
       className="group relative bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -77,7 +83,7 @@ const ProductCard = ({ product }) => {
           <span className="text-xl font-bold text-lavender-700">${product.price}</span>
         </div>
       </div>
-    </div>
+    </motion.div> 
   );
 };
 

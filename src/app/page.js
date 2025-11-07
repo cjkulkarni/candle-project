@@ -18,6 +18,80 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Parent controls timing for children
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3, // delay between children
+    },
+  },
+};
+
+// Each child’s entrance animation
+const itemLeft = {
+  hidden: { opacity: 0, x: -100 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.8, ease: "easeOut" } },
+};
+
+const itemRight = {
+  hidden: { opacity: 0, x: 100 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.8, ease: "easeOut" } },
+};
+  const containerVariant = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+  },
+  };
+  
+   const textContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+ const textBounce = {
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 120,
+      damping: 10,
+      duration: 0.6,
+    },
+  },
+};
+
+ const textSlideLeft = {
+  hidden: { opacity: 0, x: -50 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+ const textSlideRight = {
+  hidden: { opacity: 0, x: 50 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+
   return (
     <div className="bg-gray-50">
       {/* Hero Section */}
@@ -36,12 +110,12 @@ export default function Home() {
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-        initial={{ opacity: 0, y: -100 }} // start off-screen left
-        whileInView={{ opacity: 1, x: 0 }} // fade + slide in
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        variants={container}
+        initial="hidden"
+        whileInView="show"
         viewport={{ once: true, amount: 0.3 }}
-        className="max-w-lg"
       >
+        <motion.div variants={itemRight}>
             <p className="text-sm uppercase tracking-widest text-lavender-700 mb-4 font-light flex items-center justify-center space-x-2">
               <Sparkles className="w-4 h-4" />
               <span>Our Premium Collection</span>
@@ -68,7 +142,8 @@ export default function Home() {
               >
                 Discover More
               </Link>
-            </div>
+              </div>
+              </motion.div>
           </motion.div>
         </div>
 
@@ -84,13 +159,14 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-        initial={{ opacity: 0, x: -100 }} // start off-screen left
-        whileInView={{ opacity: 1, x: 0 }} // fade + slide in
-        transition={{ duration: 0.8, ease: "easeOut" }}
+             <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="show"
         viewport={{ once: true, amount: 0.3 }}
         className="max-w-lg"
       >
+        <motion.div variants={itemLeft} >
               <Image
                 src="https://images.unsplash.com/photo-1707839568483-9f1924d5f5de?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBjYW5kbGVzfGVufDB8fHx8MTc2MjM0ODIzOXww&ixlib=rb-4.1.0&q=85"
                 alt="Original Candles"
@@ -99,15 +175,16 @@ export default function Home() {
                 className="w-full h-[500px] object-cover rounded-2xl shadow-2xl animate-fade-in-left"
               />
             </motion.div>
-            
+             </motion.div>
             <div className="order-1 lg:order-2 space-y-6">
-               <motion.div
-        initial={{ opacity: 0, x: 100 }} // start off-screen left
-        whileInView={{ opacity: 1, x: 0 }} // fade + slide in
-        transition={{ duration: 0.8, ease: "easeOut" }}
+                        <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="show"
         viewport={{ once: true, amount: 0.3 }}
         className="max-w-lg"
       >
+        <motion.div variants={itemRight} >
               <p className="text-sm uppercase tracking-widest text-lavender-700 font-light">Our Original Collection</p>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 leading-tight">
                 The New <span className="text-lavender-700">Fragrance</span>
@@ -123,7 +200,8 @@ export default function Home() {
                 Shop Now
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" />
               </Link>
-              </motion.div>
+                </motion.div>
+                </motion.div>
             </div>
           </div>
         </div>
@@ -134,13 +212,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-                <motion.div
-        initial={{ opacity: 0, x: -100 }} // start off-screen left
-        whileInView={{ opacity: 1, x: 0 }} // fade + slide in
-        transition={{ duration: 0.8, ease: "easeOut" }}
+                        <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="show"
         viewport={{ once: true, amount: 0.3 }}
         className="max-w-lg"
       >
+        <motion.div variants={itemLeft} >
               <p className="text-sm uppercase tracking-widest text-lavender-700 font-light">Wellness Collection</p>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 leading-tight">
                 Instinctive and <span className="text-lavender-700">Calming</span>
@@ -157,14 +236,16 @@ export default function Home() {
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" />
                 </Link>
                 </motion.div>
+                </motion.div>
             </div>
-               <motion.div
-        initial={{ opacity: 0, x: 100 }} // start off-screen left
-        whileInView={{ opacity: 1, x: 0 }} // fade + slide in
-        transition={{ duration: 0.8, ease: "easeOut" }}
+                       <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="show"
         viewport={{ once: true, amount: 0.3 }}
         className="max-w-lg"
       >
+        <motion.div variants={itemRight} >
               <Image
                 src="https://images.unsplash.com/photo-1599313804818-2eaba0b14cba?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHw0fHxzY2VudGVkJTIwY2FuZGxlc3xlbnwwfHx8fDE3NjIzNDgyNDR8MA&ixlib=rb-4.1.0&q=85"
                 alt="Wellness Candles"
@@ -173,7 +254,7 @@ export default function Home() {
                 className="w-full h-[500px] object-cover rounded-2xl shadow-2xl"
               />
               </motion.div>
-            
+            </motion.div>
           </div>
         </div>
       </section>
@@ -185,7 +266,13 @@ export default function Home() {
             <p className="text-sm uppercase tracking-widest text-lavender-700 mb-2 font-light">Check out our</p>
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Best Sellers</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+           <motion.div
+      variants={containerVariant}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.2 }}
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+    >
             {featuredProducts.map((product, index) => (
               <div
                 key={product.id}
@@ -195,7 +282,7 @@ export default function Home() {
                 <ProductCard product={product} />
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -207,16 +294,23 @@ export default function Home() {
           }} />
         </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h3 className="text-3xl md:text-4xl font-serif font-bold mb-6">
+           <motion.div
+        variants={textContainer}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+          <motion.h3  variants={textBounce} className="text-3xl md:text-4xl font-serif font-bold mb-6">
             The new fragrance that will surprise you every day
-          </h3>
+          </motion.h3>
           <Link
             href="/shop"
             className="inline-flex items-center px-8 py-4 bg-white text-lavender-700 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
             Discover
             <ArrowRight className="ml-2 w-5 h-5" />
-          </Link>
+            </Link>
+            </motion.div>
         </div>
       </section>
 
