@@ -154,12 +154,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #b45309;
+  background: #a083f8;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #92400e;
+  background: #5918c1;
 }
 
 /* Gradient text */
