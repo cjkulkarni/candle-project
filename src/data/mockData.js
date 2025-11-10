@@ -7,6 +7,12 @@ export const candleProducts = [
     originalPrice: null,
     rating: 5,
     image: "https://images.unsplash.com/photo-1643122966676-29e8597257f7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwxfHxzY2VudGVkJTIwY2FuZGxlc3xlbnwwfHx8fDE3NjIzNDgyNDR8MA&ixlib=rb-4.1.0&q=85",
+    images: [
+      "https://images.unsplash.com/photo-1643122966676-29e8597257f7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwxfHxzY2VudGVkJTIwY2FuZGxlc3xlbnwwfHx8fDE3NjIzNDgyNDR8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwyfHxzY2VudGVkJTIwY2FuZGxlc3xlbnwwfHx8fDE3NjIzNDgyNDR8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1603006905003-be475563bc59?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwzfHxzY2VudGVkJTIwY2FuZGxlc3xlbnwwfHx8fDE3NjIzNDgyNDR8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1599313804818-2eaba0b14cba?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHw0fHxzY2VudGVkJTIwY2FuZGxlc3xlbnwwfHx8fDE3NjIzNDgyNDR8MA&ixlib=rb-4.1.0&q=85"
+    ],
     description: "Rich amber scent with hints of vanilla and sandalwood",
     featured: true
   },
