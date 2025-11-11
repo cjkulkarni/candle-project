@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Sparkles, Heart, Award, Leaf } from 'lucide-react';
 import { motion } from "framer-motion";
@@ -29,6 +29,7 @@ export default function About() {
       description: 'Recognized globally for our exceptional quality and innovative fragrance compositions.'
     }
   ];
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div className="bg-white">
@@ -117,11 +118,10 @@ export default function About() {
             viewport={{ once: true, amount: 0.2 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <motion.div
-                key={category.id}
+
                 variants={cardVariant}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-
                 key={index}
                 className="bg-white p-8 rounded-xl shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2"
               >
@@ -157,6 +157,7 @@ export default function About() {
             whileInView="show"
             viewport={{ once: true, amount: 0.2 }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <motion.div
+              key="image1"
               variants={cardVariant}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
@@ -170,6 +171,7 @@ export default function About() {
               />
             </motion.div>
             <motion.div
+              key="image2"
               variants={cardVariant}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
@@ -183,6 +185,7 @@ export default function About() {
               />
             </motion.div>
             <motion.div
+              key="image3"
               variants={cardVariant}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
