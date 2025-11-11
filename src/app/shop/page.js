@@ -4,6 +4,12 @@ import React, { useState, useMemo } from 'react';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { candleProducts } from '@/data/mockData';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion"
 
 export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -52,6 +58,7 @@ export default function Shop() {
         </div>
       </div>
 
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Filters Sidebar */}
@@ -64,26 +71,31 @@ export default function Shop() {
 
               {/* Category Filter */}
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3>
-                <div className="space-y-2">
-                  {categories.map(category => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-4 py-2 rounded-lg transition-all duration-300 ${
-                        selectedCategory === category
-                          ? 'bg-lavender-700 text-white'
-                          : 'bg-gray-50 text-gray-700 hover:bg-lavender-50'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger><h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3></AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        {categories.map(category => (
+                          <button
+                            key={category}
+                            onClick={() => setSelectedCategory(category)}
+                            className={`w-full text-left px-4 py-2 rounded-lg transition-all duration-300 ${selectedCategory === category
+                              ? 'bg-lavender-700 text-white'
+                              : 'bg-gray-50 text-gray-700 hover:bg-lavender-50'
+                              }`}
+                          >
+                            {category}
+                          </button>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
 
               {/* Price Range */}
-              <div className="mb-6">
+              <div className="mb-6 border-b pb-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Price Range</h3>
                 <div className="space-y-3">
                   <input
@@ -100,6 +112,8 @@ export default function Shop() {
                   </div>
                 </div>
               </div>
+
+
 
               {/* Sort By */}
               <div>
@@ -150,6 +164,6 @@ export default function Shop() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

@@ -2,21 +2,23 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
-import { cardVariant } from '@/utils/motionVariants';
+import { fadeUp } from '@/utils/motionVariants';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
 
 
   return (
-    <motion.div
-      variants={cardVariant}
-      className="group relative bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+   
+      <motion.div
+        variants={fadeUp}
+        className="group relative bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       {/* Image Container */}
       <div className="relative overflow-hidden aspect-square">
         <Image
@@ -35,8 +37,14 @@ const ProductCard = ({ product }) => {
             <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-lavender-600 hover:text-white">
               <ShoppingCart className="w-5 h-5" />
             </button>
+
             <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75 hover:bg-lavender-600 hover:text-white">
-              <Eye className="w-5 h-5" />
+              <Link 
+                  href={`/product/${product.name.toLowerCase().replace(/ /g, '-')}`} 
+                  className="block"
+                >
+                <Eye className="w-5 h-5" />
+              </Link>
             </button>
           </div>
         </div>
@@ -55,8 +63,12 @@ const ProductCard = ({ product }) => {
       {/* Product Info */}
       <div className="p-5">
         <p className="text-xs text-gray-300 uppercase tracking-wider mb-1">{product.category}</p>
+
         <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-lavender-700 transition-colors duration-300">
-          {product.name}
+          <Link 
+            href={`/product/${product.name.toLowerCase().replace(/ /g, '-')}`} 
+            className="block"
+          >  {product.name} </Link>
         </h3>
         
         {/* Rating */}
@@ -81,7 +93,8 @@ const ProductCard = ({ product }) => {
           <span className="text-xl font-bold text-lavender-700">${product.price}</span>
         </div>
       </div>
-    </motion.div> 
+      </motion.div> 
+    
   );
 };
 
