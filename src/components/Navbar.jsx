@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
 import { motion } from "framer-motion";
-
+//import{toggleCart} from '@/context/CartContext';
+import { useCart } from '@/context/CartContext';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cartCount] = useState(0);
+//  const [cartCount] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -19,6 +20,8 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  const { cartCount, toggleCart,isOpen } = useCart();
+  console.log('Cart Count from Context:', cartCount);
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -76,7 +79,8 @@ const Navbar = () => {
               <button className="text-gray-700 hover:text-lavender-700 transition-colors duration-300">
                 <User className="w-5 h-5" />
               </button>
-              <button className="relative text-gray-700 hover:text-lavender-700 transition-colors duration-300">
+              <button className="relative text-gray-700 hover:text-lavender-700 transition-colors duration-300"
+                onClick={()=>{toggleCart({isOpen})}}>
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-lavender-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

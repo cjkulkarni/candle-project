@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -33,12 +33,26 @@ export default function ProductPage() {
     }
 
     const handleQuantityChange = (action) => {
+        console.log('Current quantity:', action);
         if (action === 'increase') {
             setQuantity(prev => prev + 1);
         } else if (action === 'decrease' && quantity > 1) {
             setQuantity(prev => prev - 1);
         }
     };
+
+    const handleAddToCart = useCallback(() => {
+        addItem({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            size: selectedSize,
+            quantity: quantity
+        });
+        // Reset quantity immediately after adding
+        setQuantity(1);
+    }, [product, selectedSize, quantity, addItem]);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -138,16 +152,7 @@ export default function ProductPage() {
                         <div className="flex space-x-4">
                             <Button 
                                 className="flex-1 gap-2"
-                                onClick={() => {
-                                    addItem({
-                                        id: product.id,
-                                        name: product.name,
-                                        price: product.price,
-                                        image: product.image,
-                                        size: selectedSize,
-                                        quantity: quantity
-                                    });
-                                }}
+                                onClick={handleAddToCart}
                             >
                                 <ShoppingCart className="h-5 w-5" />
                                 Add to Cart
