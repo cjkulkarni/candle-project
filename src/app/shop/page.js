@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { candleProducts } from '@/data/mockData';
@@ -15,8 +15,16 @@ export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [sortBy, setSortBy] = useState('featured');
+  const [isMobile, setIsMobile] = useState(false);
 
   const categories = ['All', ...new Set(candleProducts.map(p => p.category))];
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024); // tailwind lg = 1024px
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let products = [...candleProducts];
@@ -63,72 +71,116 @@ export default function Shop() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <div className="flex items-center space-x-2 mb-6">
-                <Filter className="w-5 h-5 text-lavender-700" />
-                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-              </div>
-
-              {/* Category Filter */}
-              <div className="mb-6">
+            <div className="bg-white rounded-lg shadow-sm sticky top-24">
+              {/* extract the filters content so we can render it inside an accordion on mobile
+                  and render expanded on desktop */}
+              {isMobile ? (
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="item-1">
-                    <AccordionTrigger><h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3></AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-2">
-                        {categories.map(category => (
-                          <button
-                            key={category}
-                            onClick={() => setSelectedCategory(category)}
-                            className={`w-full text-left px-4 py-2 rounded-lg transition-all duration-300 ${selectedCategory === category
-                              ? 'bg-lavender-700 text-white'
-                              : 'bg-gray-50 text-gray-700 hover:bg-lavender-50'
-                              }`}
-                          >
-                            {category}
-                          </button>
-                        ))}
+                    <AccordionTrigger>
+                      <div className="flex items-center w-auto p-3">
+                        <Filter className="w-5 h-5 ml-2 text-lavender-700" />
+                        <h2 className="pl-2 text-lg font-semibold text-gray-900">Filters</h2>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-6" >
+                      {/* Category Filter */}
+                      <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3>
+                        <select
+                          onChange={(e) => { setSelectedCategory(e.target.value); }}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300">
+                          {categories.map(category => (
+                            <option key={category} value={category}>{category}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Price Range */}
+                      <div className="mb-6 border-b pb-6">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Price Range</h3>
+                        <div className="space-y-3">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={priceRange[1]}
+                            onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700"
+                          />
+                          <div className="flex items-center justify-between text-sm text-gray-600">
+                            <span>${priceRange[0]}</span>
+                            <span>${priceRange[1]}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sort By */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Sort By</h3>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300"
+                        >
+                          <option value="featured">Featured</option>
+                          <option value="price-low">Price: Low to High</option>
+                          <option value="price-high">Price: High to Low</option>
+                          <option value="name">Name: A to Z</option>
+                        </select>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-              </div>
+              ) : (
+                <div className="p-6">
+                  {/* Category Filter */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3>
+                    <select
+                      onChange={(e) => { setSelectedCategory(e.target.value); }}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300">
+                      {categories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Price Range */}
-              <div className="mb-6 border-b pb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Price Range</h3>
-                <div className="space-y-3">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700"
-                  />
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
+                  {/* Price Range */}
+                  <div className="mb-6 border-b pb-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Price Range</h3>
+                    <div className="space-y-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={priceRange[1]}
+                        onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700"
+                      />
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <span>${priceRange[0]}</span>
+                        <span>${priceRange[1]}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sort By */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Sort By</h3>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300"
+                    >
+                      <option value="featured">Featured</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="name">Name: A to Z</option>
+                    </select>
                   </div>
                 </div>
-              </div>
-
-
-
-              {/* Sort By */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Sort By</h3>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300"
-                >
-                  <option value="featured">Featured</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="name">Name: A to Z</option>
-                </select>
-              </div>
+              )}
             </div>
           </div>
 
