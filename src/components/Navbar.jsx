@@ -21,7 +21,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const { cartCount, toggleCart,isOpen } = useCart();
-  console.log('Cart Count from Context:', cartCount);
 
   const navLinks = [
     { name: 'Home', path: '/' },
