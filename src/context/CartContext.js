@@ -23,20 +23,7 @@ export const CART_ACTIONS = {
 function cartReducer(state, action) {
   switch (action.type) {
     case CART_ACTIONS.ADD_ITEM: {
-      const existingItemIndex = state.items.findIndex(
-        item => 
-          item.id === action.payload.id && 
-          item.size === action.payload.size
-      );
-
-      if (existingItemIndex > -1) {
-        // Item exists, update quantity
-        const updatedItems = [...state.items];
-        updatedItems[existingItemIndex].quantity += action.payload.quantity;
-        return { ...state, items: updatedItems };
-      }
-
-      // Add new item
+      // Add new item (existing items are handled in addItem function via updateQuantity)
       return { 
         ...state, 
         items: [...state.items, action.payload],
@@ -88,7 +75,20 @@ export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
   const addItem = (item) => {
-    dispatch({ type: CART_ACTIONS.ADD_ITEM, payload: item });
+    // Check if item already exists in cart
+    const existingItem = state.items.find(
+      cartItem => cartItem.id === item.id && cartItem.size === item.size
+    );
+
+    if (existingItem) {
+      // Item already exists, update quantity by adding to existing quantity
+      updateQuantity(item.id, item.size, existingItem.quantity + item.quantity);
+      // Also open the cart
+      dispatch({ type: CART_ACTIONS.TOGGLE_CART, payload: true });
+    } else {
+      // New item, add it to cart
+      dispatch({ type: CART_ACTIONS.ADD_ITEM, payload: item });
+    }
   };
 
   const removeItem = (item) => {

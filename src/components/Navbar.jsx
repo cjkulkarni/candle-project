@@ -2,15 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ShoppingCart, User, Menu, X, Search, LogOut, Settings } from 'lucide-react';
 import { motion } from "framer-motion";
+import { useCart } from '@/context/CartContext';
+import { useUser } from '@/context/UserContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cartCount] = useState(0);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const { cartCount, toggleCart, isOpen } = useCart();
+  const { user, logout, isAuthenticated } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,10 +85,54 @@ const Navbar = () => {
               <button className="text-gray-700 hover:text-lavender-700 transition-colors duration-300">
                 <Search className="w-5 h-5" />
               </button>
-              <button className="text-gray-700 hover:text-lavender-700 transition-colors duration-300">
-                <User className="w-5 h-5" />
-              </button>
-              <button className="relative text-gray-700 hover:text-lavender-700 transition-colors duration-300">
+
+              {/* User Dropdown */}
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="text-gray-700 hover:text-lavender-700 transition-colors duration-300">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-lavender-400 to-lavender-600 flex items-center justify-center text-white text-sm font-bold">
+                        {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                      </div>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-4 py-3 border-b">
+                      <p className="font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
+                      <p className="text-sm text-gray-500">{user?.email}</p>
+                    </div>
+                    <DropdownMenuItem onClick={() => router.push('/profile')} className="flex items-center gap-2 cursor-pointer">
+                      <User className="w-4 h-4" />
+                      <span>View Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/profile')} className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="w-4 h-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        logout();
+                        router.push('/');
+                      }}
+                      className="flex items-center gap-2 cursor-pointer text-red-600 hover:text-red-700"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/auth/login">
+                  <button className="text-gray-700 hover:text-lavender-700 transition-colors duration-300">
+                    <User className="w-5 h-5" />
+                  </button>
+                </Link>
+              )}
+
+              <button 
+                className="relative text-gray-700 hover:text-lavender-700 transition-colors duration-300"
+                onClick={() => toggleCart(!isOpen)}>
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-lavender-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
