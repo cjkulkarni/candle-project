@@ -89,12 +89,23 @@ export default function RegisterPage() {
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
+        password: formData.password,
       });
-      toast.success('Account created successfully! Redirecting to profile...');
+      toast.success('Account created successfully! Redirecting to your profile...');
       router.push('/profile');
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
       console.error('Registration error:', error);
+      
+      // Handle specific WordPress API errors
+      if (error.message.includes('email_exists')) {
+        toast.error('Email already registered. Please login or use a different email.');
+      } else if (error.message.includes('username_exists')) {
+        toast.error('Username already exists. Please choose a different one.');
+      } else if (error.message.includes('weak_password')) {
+        toast.error('Password is too weak. Please use a stronger password.');
+      } else {
+        toast.error(error.message || 'Registration failed. Please try again.');
+      }
     }
   };
 

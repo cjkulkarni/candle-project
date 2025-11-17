@@ -77,7 +77,7 @@ export default function ProfilePage() {
               >
                 <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-lavender-200 shadow-lg">
                   <Image
-                    src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=random'}
+                    src={user?.avatar1 || 'https://ui-avatars.com/api/?name=User&background=random'}
                     alt={`${user?.firstName} ${user?.lastName}`}
                     width={96}
                     height={96}
