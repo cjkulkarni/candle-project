@@ -184,33 +184,124 @@ export default function ProfilePage() {
 
             {/* Address Tab */}
             <TabsContent value="address" className="p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Shipping Address</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">Address</label>
-                  <p className="text-lg text-gray-900">{user?.address || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">City</label>
-                  <p className="text-lg text-gray-900">{user?.city || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">Postal Code</label>
-                  <p className="text-lg text-gray-900">{user?.zipCode || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">Country</label>
-                  <p className="text-lg text-gray-900">{user?.country || 'Not provided'}</p>
-                </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-8">Addresses</h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Billing Address */}
+                <Card className="p-6 border-2 border-lavender-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Billing Address</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">First Name</label>
+                      <p className="text-gray-900">{user?.billing?.first_name || user?.firstName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Last Name</label>
+                      <p className="text-gray-900">{user?.billing?.last_name || user?.lastName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Company</label>
+                      <p className="text-gray-900">{user?.billing?.company || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 1</label>
+                      <p className="text-gray-900">{user?.billing?.address_1 || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 2</label>
+                      <p className="text-gray-900">{user?.billing?.address_2 || 'Not provided'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">City</label>
+                        <p className="text-gray-900">{user?.billing?.city || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Postal Code</label>
+                        <p className="text-gray-900">{user?.billing?.postcode || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Country</label>
+                        <p className="text-gray-900">{user?.billing?.country || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">State</label>
+                        <p className="text-gray-900">{user?.billing?.state || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Email</label>
+                      <p className="text-gray-900">{user?.billing?.email || user?.email || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Phone</label>
+                      <p className="text-gray-900">{user?.billing?.phone || user?.phone || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Shipping Address */}
+                <Card className="p-6 border-2 border-blue-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Shipping Address</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">First Name</label>
+                      <p className="text-gray-900">{user?.shipping?.first_name || user?.firstName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Last Name</label>
+                      <p className="text-gray-900">{user?.shipping?.last_name || user?.lastName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Company</label>
+                      <p className="text-gray-900">{user?.shipping?.company || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 1</label>
+                      <p className="text-gray-900">{user?.shipping?.address_1 || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 2</label>
+                      <p className="text-gray-900">{user?.shipping?.address_2 || 'Not provided'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">City</label>
+                        <p className="text-gray-900">{user?.shipping?.city || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Postal Code</label>
+                        <p className="text-gray-900">{user?.shipping?.postcode || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Country</label>
+                        <p className="text-gray-900">{user?.shipping?.country || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">State</label>
+                        <p className="text-gray-900">{user?.shipping?.state || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Phone</label>
+                      <p className="text-gray-900">{user?.shipping?.phone || user?.phone || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </Card>
               </div>
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEditModalOpen(true)}
-                className="mt-6 flex items-center gap-2 bg-lavender-600 text-white px-4 py-2 rounded-lg hover:bg-lavender-700 transition"
+                className="mt-8 flex items-center gap-2 bg-lavender-600 text-white px-4 py-2 rounded-lg hover:bg-lavender-700 transition"
               >
                 <Edit2 className="h-4 w-4" />
-                Edit Address
+                Edit Addresses
               </motion.button>
             </TabsContent>
 

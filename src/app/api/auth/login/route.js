@@ -81,7 +81,6 @@ export async function POST(request) {
         },
       }
     );
-    console.log( meResponse);
 
     if (!meResponse.ok) {
       console.error('Failed to fetch user from /me endpoint');
@@ -94,6 +93,33 @@ export async function POST(request) {
             firstName: '',
             lastName: '',
             username: tokenData.user_nicename || '',
+            phone: '',
+            roles: [],
+            billing: {
+              firstName: '',
+              lastName: '',
+              company: '',
+              address1: '',
+              address2: '',
+              city: '',
+              postcode: '',
+              country: '',
+              state: '',
+              email: '',
+              phone: ''
+            },
+            shipping: {
+              firstName: '',
+              lastName: '',
+              company: '',
+              address1: '',
+              address2: '',
+              city: '',
+              postcode: '',
+              country: '',
+              state: '',
+              phone: ''
+            },
             avatar: `https://ui-avatars.com/api/?name=User&background=random`,
           },
         },
@@ -101,54 +127,48 @@ export async function POST(request) {
       );
     }
 
-    const meData = await meResponse.json();
+    const userData = await meResponse.json();
 
-    // Get full user details from WordPress /wp/v2/users endpoint
-    const userResponse = await fetch(
-      `${WORDPRESS_API_URL}/wp-json/wp/v2/users/${meData.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${tokenData.token}`,
-        },
-      }
-    );
-
-    if (!userResponse.ok) {
-      console.error('Failed to fetch user details from /wp/v2/users');
-      return NextResponse.json(
-        {
-          token: tokenData.token,
-          user: {
-            id: meData.id,
-            email: meData.email || tokenData.user_email || '',
-            firstName: meData.first_name || '',
-            lastName: meData.last_name || '',
-            username: meData.username || tokenData.user_nicename || '',
-            avatar: `https://ui-avatars.com/api/?name=${meData.first_name || 'User'}&background=random`,
-          },
-        },
-        { status: 200 }
-      );
-    }
-
-    const userData = await userResponse.json();
-    
     return NextResponse.json(
       {
         token: tokenData.token,
         user: {
           id: userData.id,
           email: userData.email,
+          username: userData.username,
           firstName: userData.first_name || '',
           lastName: userData.last_name || '',
-          phone: userData.acf?.phone || '',
-          address: userData.acf?.address || '',
-          city: userData.acf?.city || '',
-          zipCode: userData.acf?.zip_code || '',
-          country: userData.acf?.country || '',
-          avatar: userData.avatar_urls?.['96'] || 
+          phone: userData.phone || '',
+          roles: userData.roles || [],
+          // Billing Address
+          billing: {
+            firstName: userData.billing?.first_name || '',
+            lastName: userData.billing?.last_name || '',
+            company: userData.billing?.company || '',
+            address1: userData.billing?.address_1 || '',
+            address2: userData.billing?.address_2 || '',
+            city: userData.billing?.city || '',
+            postcode: userData.billing?.postcode || '',
+            country: userData.billing?.country || '',
+            state: userData.billing?.state || '',
+            email: userData.billing?.email || userData.email,
+            phone: userData.billing?.phone || userData.phone || ''
+          },
+          // Shipping Address
+          shipping: {
+            firstName: userData.shipping?.first_name || '',
+            lastName: userData.shipping?.last_name || '',
+            company: userData.shipping?.company || '',
+            address1: userData.shipping?.address_1 || '',
+            address2: userData.shipping?.address_2 || '',
+            city: userData.shipping?.city || '',
+            postcode: userData.shipping?.postcode || '',
+            country: userData.shipping?.country || '',
+            state: userData.shipping?.state || '',
+            phone: userData.shipping?.phone || userData.phone || ''
+          },
+          avatar: userData.avatars || 
             `https://ui-avatars.com/api/?name=${userData.first_name}+${userData.last_name}&background=random`,
-          username: userData.username,
         },
       },
       { status: 200 }

@@ -99,7 +99,8 @@ export function UserProvider({ children }) {
         throw new Error('No authentication token found');
       }
 
-      // Call WordPress API (no userId needed, uses /me endpoint)
+      // Send data to API - format should match the API response format
+      // The API expects: first_name, last_name, phone, billing{...}, shipping{...}
       const updatedUser = await wpApiClient.updateUserProfile(
         updatedData,
         token
