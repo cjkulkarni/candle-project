@@ -33,7 +33,7 @@ export default function ProductPage() {
     }
 
     const handleQuantityChange = (action) => {
-        console.log('Current quantity:', action);
+
         if (action === 'increase') {
             setQuantity(prev => prev + 1);
         } else if (action === 'decrease' && quantity > 1) {
@@ -64,7 +64,7 @@ export default function ProductPage() {
                         initial="hidden"
                         animate="visible"
                     >
-                        <ProductGallery 
+                        <ProductGallery
                             images={product.images || [product.image]}
                         />
                     </motion.div>
@@ -150,7 +150,7 @@ export default function ProductPage() {
 
                         {/* Add to Cart Button */}
                         <div className="flex space-x-4">
-                            <Button 
+                            <Button
                                 className="flex-1 gap-2"
                                 onClick={handleAddToCart}
                             >

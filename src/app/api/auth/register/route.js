@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL ;
+const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL;
 const WC_CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY || '';
 const WC_CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET || '';
 
@@ -13,7 +13,7 @@ function createBasicAuth(key, secret) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    
+
     const {
       email,
       firstName,
@@ -92,7 +92,7 @@ export async function POST(request) {
     }
 
     const newUser = await registerResponse.json();
-    console.log('User registered in WooCommerce:', newUser.id);
+
 
     // Now login the user to get JWT token
     const loginResponse = await fetch(
@@ -162,7 +162,7 @@ export async function POST(request) {
           city: userData.acf?.city || city || '',
           zipCode: userData.acf?.zip_code || zipCode || '',
           country: userData.acf?.country || country || '',
-          avatar: userData.avatar_urls?.['96'] || 
+          avatar: userData.avatar_urls?.['96'] ||
             `https://ui-avatars.com/api/?name=${userData.first_name}+${userData.last_name}&background=random`,
           username: userData.username,
         },

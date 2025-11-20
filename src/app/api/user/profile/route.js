@@ -68,7 +68,7 @@ export async function GET(request) {
           state: userData.shipping?.state || '',
           phone: userData.shipping?.phone || userData.phone || ''
         },
-        avatar: userData.avatars || 
+        avatar: userData.avatars ||
           `https://ui-avatars.com/api/?name=${userData.first_name}+${userData.last_name}&background=random`,
       },
       { status: 200 }
@@ -112,7 +112,7 @@ export async function PUT(request) {
         },
       }
     );
-console.log("meResponse:", meResponse);
+
     if (!meResponse.ok) {
       console.error('Failed to fetch user from /me endpoint');
       return NextResponse.json(
@@ -213,7 +213,7 @@ console.log("meResponse:", meResponse);
           state: updatedData.shipping?.state || '',
           phone: updatedData.shipping?.phone || updatedData.phone || ''
         },
-        avatar: updatedData.avatars || 
+        avatar: updatedData.avatars ||
           `https://ui-avatars.com/api/?name=${updatedData.first_name}+${updatedData.last_name}&background=random`,
       },
       { status: 200 }
