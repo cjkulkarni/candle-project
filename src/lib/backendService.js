@@ -9,15 +9,18 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost/candl
  * Make a request to the WordPress REST API
  * @param {string} endpoint - API endpoint (e.g., '/wp-json/wc/v3/products')
  * @param {object} options - Fetch options (method, headers, body, etc.)
+ * @param {string} token - JWT token
  * @returns {Promise<object>} - Response data
  */
-async function fetchFromBackend(endpoint, options = {}) {
+
+async function fetchFromBackend(endpoint, options, token = {}) {
   const url = `${BACKEND_URL}${endpoint}`;
 
   const defaultOptions = {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
     },
     ...options,
   };
@@ -30,6 +33,7 @@ async function fetchFromBackend(endpoint, options = {}) {
     }
 
     const data = await response.json();
+
     return data;
   } catch (error) {
     console.error(`Error fetching from ${url}:`, error);
@@ -52,7 +56,7 @@ export async function getProducts(params = {}) {
     ...(params.category && { category: params.category }),
   });
 
-  return fetchFromBackend(`wp-json/wc/v3/products?${queryParams}`);
+  return fetchFromBackend(`wp-json/wc/store/v1/products?${queryParams}`);
 }
 
 /**
@@ -61,7 +65,7 @@ export async function getProducts(params = {}) {
  * @returns {Promise<object>} - Product data
  */
 export async function getProductById(productId) {
-  return fetchFromBackend(`wp-json/wc/v3/products/${productId}`);
+  return fetchFromBackend(`wp-json/wc/store/v1/products/${productId}`);
 }
 
 /**

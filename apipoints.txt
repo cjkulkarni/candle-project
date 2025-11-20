@@ -1,0 +1,22 @@
+GET /wp-json/wc/store/v1/products              → Fetch all products
+GET /wp-json/wc/store/v1/products/{id}         → Fetch single product
+GET /wp-json/wc/store/v1/products/categories   → Fetch product categories
+GET /wp-json/wc/store/v1/products/attributes   → Fetch product attributes
+
+GET /wp-json/wc/store/v1/cart                  → Get current cart
+POST /wp-json/wc/store/v1/cart/add-item        → Add product to cart
+POST /wp-json/wc/store/v1/cart/remove-item     → Remove product from cart
+POST /wp-json/wc/store/v1/cart/update-item     → Update item quantity
+POST /wp-json/wc/store/v1/cart/apply-coupon    → Apply coupon to cart
+POST /wp-json/wc/store/v1/cart/remove-coupon   → Remove coupon
+
+POST /wp-json/wc/store/v1/checkout             → Create order during checkout
+
+POST /wp-json/jwt-auth/v1/token                → Login user and get JWT token
+POST /wp-json/custom/v1/register               → Register new user (custom endpoint you will create)
+
+GET /wp-json/wc/v3/customers/{id}              → Get customer account details (JWT required)
+PUT /wp-json/wc/v3/customers/{id}              → Update customer details (JWT required)
+
+GET /wp-json/wp/v2/pages                       → Fetch CMS pages (About, Contact, etc.)
+GET /wp-json/wp/v2/posts                       → Fetch blog posts (if any)
