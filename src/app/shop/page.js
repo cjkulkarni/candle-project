@@ -40,6 +40,7 @@ export default function Shop() {
         const transformedProducts = data.data.map(product => ({
           id: product.id,
           name: product.name,
+          slug: product.slug,
           category: product.categories?.[0]?.name || 'Uncategorized',
           // Convert price from minor units (paise) to major units (rupees)
           price: parseFloat(product.prices?.price) / 100 || 0,

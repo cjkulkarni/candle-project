@@ -40,7 +40,7 @@ const ProductCard = ({ product }) => {
 
             <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75 hover:bg-lavender-600 hover:text-white">
               <Link
-                href={`/product/${product.name.toLowerCase().replace(/ /g, '-')}`}
+                href={`/product/${product.slug}`}
                 className="block"
               >
                 <Eye className="w-5 h-5" />
@@ -66,7 +66,7 @@ const ProductCard = ({ product }) => {
 
         <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-lavender-700 transition-colors duration-300">
           <Link
-            href={`/product/${product.name.toLowerCase().replace(/ /g, '-')}`}
+            href={`/product/${product.slug}`}
             className="block"
           >  {product.name} </Link>
         </h3>

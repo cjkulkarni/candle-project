@@ -27,6 +27,7 @@ const itemRight = {
     hidden: { opacity: 0, x: 100 },
     show: { opacity: 1, x: 0, transition: { duration: 0.8, ease: "easeOut" } },
 };
+
 const containerVariant = {
     hidden: { opacity: 0 },
     show: {
@@ -78,15 +79,55 @@ const textSlideRight = {
         transition: { duration: 0.6, ease: "easeOut" },
     },
 };
+
+const fadeUp = {
+    hidden: { opacity: 0, y: 30 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: "easeOut" },
+    },
+};
+
+const imageReveal = {
+    hidden: { opacity: 0, scale: 1.1 },
+    show: {
+        opacity: 1,
+        scale: 1,
+        transition: { duration: 0.8, ease: "easeOut" },
+    },
+};
+
+const textReveal = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: "easeOut" },
+    },
+};
+
+const slideIn = {
+    hidden: { opacity: 0, x: -60 },
+    show: {
+        opacity: 1,
+        x: 0,
+        transition: { duration: 0.7, ease: "easeOut" },
+    },
+};
+
 export {
     container,
     textContainer,
-
     itemLeft,
     itemRight,
     cardVariant,
     containerVariant,
     textBounce,
     textSlideLeft,
-    textSlideRight
+    textSlideRight,
+    fadeUp,
+    imageReveal,
+    textReveal,
+    slideIn
 };
