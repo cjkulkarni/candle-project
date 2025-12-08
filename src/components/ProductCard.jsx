@@ -84,12 +84,12 @@ const ProductCard = ({ product }) => {
 
         {/* Price */}
         <div className="flex items-center space-x-2">
-          {product.originalPrice && (
+          {product.originalPrice > product.price && (
             <span className="text-gray-400 line-through text-sm">
-              ${product.originalPrice}
+              {product.currency_symbol}{product.originalPrice}
             </span>
           )}
-          <span className="text-xl font-bold text-lavender-700">${product.price}</span>
+          <span className="text-xl font-bold text-lavender-700">{product.currency_symbol}{product.price}</span>
         </div>
       </div>
     </motion.div>

@@ -43,6 +43,8 @@ export default function Shop() {
           slug: product.slug,
           category: product.categories?.[0]?.name || 'Uncategorized',
           // Convert price from minor units (paise) to major units (rupees)
+          price_html: product?.price_html,
+          currency_symbol: product.prices?.currency_symbol,
           price: parseFloat(product.prices?.price) / 100 || 0,
           originalPrice: product.prices?.regular_price ? parseFloat(product.prices.regular_price) / 100 : null,
           rating: parseFloat(product.average_rating) || 5,

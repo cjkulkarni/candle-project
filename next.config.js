@@ -15,14 +15,14 @@ const nextConfig = {
         hostname: 'ui-avatars.com',
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
+        protocol: 'https',
+        hostname: 'tdss.projectverse.in',
 
       },
     ],
   },
   env: {
-    REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL,
+    WORDPRESS_API_URL: process.env.WORDPRESS_API_URL,
   },
 };
 

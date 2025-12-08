@@ -3,7 +3,7 @@
  * Server-side only utility for fetching data from the backend
  */
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost/candle/';
+const BACKEND_URL = process.env.WORDPRESS_API_URL || 'http://localhost/candle/';
 
 /**
  * Make a request to the WordPress REST API
@@ -15,7 +15,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost/candl
 
 async function fetchFromBackend(endpoint, options, token = {}) {
   const url = `${BACKEND_URL}${endpoint}`;
-
+  console.log(url);
   const defaultOptions = {
     method: 'GET',
     headers: {
@@ -56,7 +56,7 @@ export async function getProducts(params = {}) {
     ...(params.category && { category: params.category }),
   });
 
-  return fetchFromBackend(`wp-json/wc/store/v1/products?${queryParams}`);
+  return fetchFromBackend(`/wp-json/wc/store/v1/products?${queryParams}`);
 }
 
 /**
@@ -65,7 +65,7 @@ export async function getProducts(params = {}) {
  * @returns {Promise<object>} - Product data
  */
 export async function getProductById(productId) {
-  return fetchFromBackend(`wp-json/wc/store/v1/products/${productId}`);
+  return fetchFromBackend(`/wp-json/wc/store/v1/products/${productId}`);
 }
 
 /**
@@ -93,7 +93,7 @@ export async function getCategories(params = {}) {
     ...(params.search && { search: params.search }),
   });
 
-  return fetchFromBackend(`wp-json/wc/v3/products/categories?${queryParams}`);
+  return fetchFromBackend(`/wp-json/wc/v3/products/categories?${queryParams}`);
 }
 
 /**
@@ -102,7 +102,7 @@ export async function getCategories(params = {}) {
  * @returns {Promise<object>} - Category data
  */
 export async function getCategoryById(categoryId) {
-  return fetchFromBackend(`wp-json/wc/v3/products/categories/${categoryId}`);
+  return fetchFromBackend(`/wp-json/wc/v3/products/categories/${categoryId}`);
 }
 
 /**
@@ -129,7 +129,7 @@ export async function getTags(params = {}) {
     hide_empty: params.hide_empty || true,
   });
 
-  return fetchFromBackend(`wp-json/wc/v3/products/tags?${queryParams}`);
+  return fetchFromBackend(`/wp-json/wc/v3/products/tags?${queryParams}`);
 }
 
 /**
@@ -168,7 +168,7 @@ export async function getProductReviews(productId, params = {}) {
     page: params.page || 1,
   });
 
-  return fetchFromBackend(`wp-json/wc/v3/products/${productId}/reviews?${queryParams}`);
+  return fetchFromBackend(`/wp-json/wc/v3/products/${productId}/reviews?${queryParams}`);
 }
 
 /**
@@ -176,7 +176,7 @@ export async function getProductReviews(productId, params = {}) {
  * @returns {Promise<object>} - Store settings
  */
 export async function getStoreSettings() {
-  return fetchFromBackend('wp-json/wc/v3/settings/general');
+  return fetchFromBackend('/wp-json/wc/v3/settings/general');
 }
 
 /**
@@ -191,7 +191,7 @@ export async function getOrders(params = {}) {
     status: params.status || 'any',
   });
 
-  return fetchFromBackend(`wp-json/wc/v3/orders?${queryParams}`);
+  return fetchFromBackend(`/wp-json/wc/v3/orders?${queryParams}`);
 }
 
 /**
@@ -200,7 +200,7 @@ export async function getOrders(params = {}) {
  * @returns {Promise<object>} - Customer data
  */
 export async function getCustomer(customerId) {
-  return fetchFromBackend(`wp-json/wc/v3/customers/${customerId}`);
+  return fetchFromBackend(`/wp-json/wc/v3/customers/${customerId}`);
 }
 
 /**
@@ -209,7 +209,7 @@ export async function getCustomer(customerId) {
  * @returns {Promise<object>} - Created order
  */
 export async function createOrder(orderData) {
-  return fetchFromBackend('wp-json/wc/v3/orders', {
+  return fetchFromBackend('/wp-json/wc/v3/orders', {
     method: 'POST',
     body: JSON.stringify(orderData),
   });
