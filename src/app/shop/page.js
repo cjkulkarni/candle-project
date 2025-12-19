@@ -14,6 +14,7 @@ import {
 export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [debouncedPriceRange, setDebouncedPriceRange] = useState([0, 10000]);
   const [sortBy, setSortBy] = useState('featured');
   const [isMobile, setIsMobile] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,6 +31,16 @@ export default function Shop() {
     hasMore: false,
   });
 
+  // Debounce price range changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPriceRange(priceRange);
+      setCurrentPage(1); // Reset to page 1 when price changes
+    }, 500); // Wait 500ms after user stops sliding
+
+    return () => clearTimeout(timer);
+  }, [priceRange]);
+
   // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
@@ -38,11 +49,12 @@ export default function Shop() {
 
       try {
         // Build query string with all filters
+        // Convert price from rupees to paise (multiply by 100) for WooCommerce API
         const queryParams = new URLSearchParams({
           page: currentPage.toString(),
           sortBy: sortBy,
-          minPrice: priceRange[0].toString(),
-          maxPrice: priceRange[1].toString(),
+          minPrice: (debouncedPriceRange[0] * 100).toString(),
+          maxPrice: (debouncedPriceRange[1] * 100).toString(),
         });
 
         if (selectedCategory !== 'All') {
@@ -93,7 +105,7 @@ export default function Shop() {
     };
 
     fetchProducts();
-  }, [currentPage, selectedCategory, priceRange, sortBy]);
+  }, [currentPage, selectedCategory, debouncedPriceRange, sortBy]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -174,10 +186,7 @@ export default function Shop() {
                             max="10000"
                             step="100"
                             value={priceRange[1]}
-                            onChange={(e) => {
-                              setPriceRange([0, parseInt(e.target.value)]);
-                              handleFilterChange();
-                            }}
+                            onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
                             disabled={isLoading}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700 disabled:opacity-50"
                           />
@@ -238,10 +247,7 @@ export default function Shop() {
                         max="10000"
                         step="100"
                         value={priceRange[1]}
-                        onChange={(e) => {
-                          setPriceRange([0, parseInt(e.target.value)]);
-                          handleFilterChange();
-                        }}
+                        onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
                         disabled={isLoading}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700 disabled:opacity-50"
                       />

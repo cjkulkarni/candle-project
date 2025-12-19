@@ -61,6 +61,8 @@ export async function getProducts(params = {}) {
     order: params.order || 'desc',
     ...(params.search && { search: params.search }),
     ...(params.category && { category: params.category }),
+    ...(params.min_price && { min_price: params.min_price }),
+    ...(params.max_price && { max_price: params.max_price }),
   });
 
   return fetchFromBackend(`/wp-json/wc/store/v1/products?${queryParams}`);
