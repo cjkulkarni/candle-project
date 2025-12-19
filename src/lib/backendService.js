@@ -68,6 +68,9 @@ export async function getProductById(productId) {
   return fetchFromBackend(`/wp-json/wc/store/v1/products/${productId}`);
 }
 
+export async function getProductBySlug(slug) {
+  return fetchFromBackend(`/wp-json/wc/store/v1/products?slug=${slug}`);
+}
 /**
  * Search products
  * @param {string} searchTerm - Search term
