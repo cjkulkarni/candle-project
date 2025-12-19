@@ -34,7 +34,14 @@ async function fetchFromBackend(endpoint, options, token = {}) {
 
     const data = await response.json();
 
-    return data;
+    // Return both data and headers for pagination info
+    return {
+      data,
+      headers: {
+        total: response.headers.get('x-wp-total'),
+        totalPages: response.headers.get('x-wp-totalpages'),
+      }
+    };
   } catch (error) {
     console.error(`Error fetching from ${url}:`, error);
     throw error;

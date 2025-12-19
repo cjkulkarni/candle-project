@@ -10,7 +10,6 @@ import { fadeUp } from '@/utils/motionVariants';
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  console.log(product);
   return (
 
     <motion.div

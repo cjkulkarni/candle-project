@@ -71,6 +71,7 @@ export default function ProductPage() {
                     originalPrice: p.prices?.regular_price
                         ? parseFloat(p.prices.regular_price) / 100
                         : null,
+                    currencySymbol: p.prices?.currency_symbol || '$',
                     rating: parseFloat(p.average_rating) || 0,
                     reviewCount: p.review_count || 0,
                     image: p.images?.[0]?.src || '/placeholder.jpg',
@@ -200,10 +201,10 @@ export default function ProductPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.4 }}
                         >
-                            ${product.price.toFixed(2)}
+                            {product.currencySymbol}{product.price.toFixed(2)}
                             {product.originalPrice && (
                                 <span className="ml-2 text-lg line-through text-gray-500">
-                                    ${product.originalPrice.toFixed(2)}
+                                    {product.currencySymbol}{product.originalPrice.toFixed(2)}
                                 </span>
                             )}
                         </motion.div>

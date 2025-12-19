@@ -10,11 +10,36 @@ export async function GET(request) {
     // Extract query parameters
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || 1;
-    const perPage = searchParams.get('perPage') || 20;
+    const perPage = searchParams.get('perPage') || process.env.PRODUCTS_PER_PAGE || 12;
     const search = searchParams.get('search');
     const category = searchParams.get('category');
-    const orderby = searchParams.get('orderby') || 'date';
-    const order = searchParams.get('order') || 'desc';
+    const sortBy = searchParams.get('sortBy') || 'date';
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+
+    // Map sortBy to WooCommerce orderby and order
+    let orderby = 'date';
+    let order = 'desc';
+
+    switch (sortBy) {
+      case 'price-low':
+        orderby = 'price';
+        order = 'asc';
+        break;
+      case 'price-high':
+        orderby = 'price';
+        order = 'desc';
+        break;
+      case 'name':
+        orderby = 'title';
+        order = 'asc';
+        break;
+      case 'featured':
+      default:
+        orderby = 'date';
+        order = 'desc';
+        break;
+    }
 
     const params = {
       page: parseInt(page),
@@ -22,10 +47,15 @@ export async function GET(request) {
       orderby,
       order,
       ...(search && { search }),
-      ...(category && { category }),
+      ...(category && category !== 'All' && { category }),
+      ...(minPrice && { min_price: minPrice }),
+      ...(maxPrice && { max_price: maxPrice }),
     };
 
-    const products = await getProducts(params);
+    const result = await getProducts(params);
+    const products = result.data;
+    const totalCount = parseInt(result.headers.total) || products.length;
+    const totalPages = parseInt(result.headers.totalPages) || Math.ceil(totalCount / parseInt(perPage));
 
     return Response.json(
       {
@@ -34,7 +64,9 @@ export async function GET(request) {
         meta: {
           page: parseInt(page),
           perPage: parseInt(perPage),
-          total: products.length,
+          total: totalCount,
+          totalPages: totalPages,
+          hasMore: parseInt(page) < totalPages,
         },
       },
       { status: 200 }

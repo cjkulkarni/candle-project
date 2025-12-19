@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import Pagination from '@/components/Pagination';
 import {
   Accordion,
   AccordionItem,
@@ -15,12 +16,19 @@ export default function Shop() {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [sortBy, setSortBy] = useState('featured');
   const [isMobile, setIsMobile] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // API data states
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(['All']);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [paginationMeta, setPaginationMeta] = useState({
+    page: 1,
+    perPage: 12,
+    total: 0,
+    hasMore: false,
+  });
 
   // Fetch products from API
   useEffect(() => {
@@ -29,7 +37,19 @@ export default function Shop() {
       setError(null);
 
       try {
-        const response = await fetch("/api/products");
+        // Build query string with all filters
+        const queryParams = new URLSearchParams({
+          page: currentPage.toString(),
+          sortBy: sortBy,
+          minPrice: priceRange[0].toString(),
+          maxPrice: priceRange[1].toString(),
+        });
+
+        if (selectedCategory !== 'All') {
+          queryParams.append('category', selectedCategory);
+        }
+
+        const response = await fetch(`/api/products?${queryParams.toString()}`);
         const data = await response.json();
 
         if (!data.success) {
@@ -56,10 +76,13 @@ export default function Shop() {
         }));
 
         setProducts(transformedProducts);
-        console.log(transformedProducts[0]);
-        // Extract unique categories from products
-        const uniqueCategories = [...new Set(transformedProducts.map(p => p.category).filter(c => c !== 'Uncategorized'))];
-        setCategories(['All', ...uniqueCategories]);
+        setPaginationMeta(data.meta);
+
+        // Extract unique categories from products (only on first load)
+        if (categories.length === 1) {
+          const uniqueCategories = [...new Set(transformedProducts.map(p => p.category).filter(c => c !== 'Uncategorized'))];
+          setCategories(['All', ...uniqueCategories]);
+        }
 
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -70,7 +93,7 @@ export default function Shop() {
     };
 
     fetchProducts();
-  }, []);
+  }, [currentPage, selectedCategory, priceRange, sortBy]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -79,37 +102,16 @@ export default function Shop() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products];
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
+  const handleFilterChange = () => {
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  };
 
-    // Filter by price
-    filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
-
-    // Sort
-    switch (sortBy) {
-      case 'price-low':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'name':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      default:
-        // featured - no sorting needed
-        break;
-    }
-
-    return filtered;
-  }, [products, selectedCategory, priceRange, sortBy]);
-
-  console.log(filteredProducts);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -150,7 +152,10 @@ export default function Shop() {
                         <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3>
                         <select
                           value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          onChange={(e) => {
+                            setSelectedCategory(e.target.value);
+                            handleFilterChange();
+                          }}
                           disabled={isLoading}
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300 disabled:bg-gray-100">
                           {categories.map(category => (
@@ -169,7 +174,10 @@ export default function Shop() {
                             max="10000"
                             step="100"
                             value={priceRange[1]}
-                            onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                            onChange={(e) => {
+                              setPriceRange([0, parseInt(e.target.value)]);
+                              handleFilterChange();
+                            }}
                             disabled={isLoading}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700 disabled:opacity-50"
                           />
@@ -185,7 +193,10 @@ export default function Shop() {
                         <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Sort By</h3>
                         <select
                           value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
+                          onChange={(e) => {
+                            setSortBy(e.target.value);
+                            handleFilterChange();
+                          }}
                           disabled={isLoading}
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300 disabled:bg-gray-100"
                         >
@@ -205,7 +216,10 @@ export default function Shop() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Category</h3>
                     <select
                       value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        handleFilterChange();
+                      }}
                       disabled={isLoading}
                       className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300 disabled:bg-gray-100">
                       {categories.map(category => (
@@ -224,7 +238,10 @@ export default function Shop() {
                         max="10000"
                         step="100"
                         value={priceRange[1]}
-                        onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                        onChange={(e) => {
+                          setPriceRange([0, parseInt(e.target.value)]);
+                          handleFilterChange();
+                        }}
                         disabled={isLoading}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-700 disabled:opacity-50"
                       />
@@ -240,7 +257,10 @@ export default function Shop() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Sort By</h3>
                     <select
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
+                      onChange={(e) => {
+                        setSortBy(e.target.value);
+                        handleFilterChange();
+                      }}
                       disabled={isLoading}
                       className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-lavender-700 transition-colors duration-300 disabled:bg-gray-100"
                     >
@@ -263,7 +283,7 @@ export default function Shop() {
                   <span>Loading products...</span>
                 ) : (
                   <>
-                    Showing <span className="font-semibold text-gray-900">{filteredProducts.length}</span> products
+                    Showing <span className="font-semibold text-gray-900">{products.length}</span> of <span className="font-semibold text-gray-900">{paginationMeta.total}</span> products
                   </>
                 )}
               </p>
@@ -291,7 +311,7 @@ export default function Shop() {
             {/* Products Grid */}
             {!isLoading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product, index) => (
+                {products.map((product, index) => (
                   <div
                     key={product.id}
                     className="animate-fade-in-up"
@@ -304,10 +324,20 @@ export default function Shop() {
             )}
 
             {/* No Results */}
-            {!isLoading && !error && filteredProducts.length === 0 && (
+            {!isLoading && !error && products.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-gray-500 text-lg">No products found matching your criteria.</p>
               </div>
+            )}
+
+            {/* Pagination */}
+            {!isLoading && !error && products.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={paginationMeta.totalPages}
+                onPageChange={handlePageChange}
+                hasMore={paginationMeta.hasMore}
+              />
             )}
 
           </div>
