@@ -47,16 +47,29 @@ export default function ProductPage() {
                 const res = await fetch(`/api/products/${slug}`);
                 const json = await res.json();
 
-                if (!json.success || !json.data || json.data.length === 0) {
+                if (!json.success || !json.data) {
                     throw new Error(json.error || 'Product not found');
                 }
 
-                const p = json.data[0];
+                // Handle nested data structure from backendService
+                const products = Array.isArray(json.data.data) ? json.data.data :
+                                Array.isArray(json.data) ? json.data : [json.data];
+
+                if (products.length === 0) {
+                    throw new Error('Product not found');
+                }
+
+                const p = products[0];
+
+                // Ensure attributes is always an array
+                const productAttributes = Array.isArray(p.attributes) ? p.attributes : [];
 
                 // Extract sizes/variations from attributes
-                const sizeAttribute = p.attributes?.find(attr =>
-                    attr.name.toLowerCase().includes('size') ||
-                    attr.name.toLowerCase().includes('variant')
+                const sizeAttribute = productAttributes.find(attr =>
+                    attr.name && (
+                        attr.name.toLowerCase().includes('size') ||
+                        attr.name.toLowerCase().includes('variant')
+                    )
                 );
                 const availableSizes = sizeAttribute?.terms?.map(term => term.name) ||
                                       (p.variations && p.variations.length > 0 ? ['Default'] : []);
@@ -87,8 +100,8 @@ export default function ProductPage() {
                     stockStatus: p.stock_availability?.text || (p.is_in_stock ? 'In Stock' : 'Out of Stock'),
                     minQuantity: p.add_to_cart?.minimum || 1,
                     maxQuantity: p.add_to_cart?.maximum || 9999,
-                    attributes: p.attributes || [],
-                    tags: p.tags || [],
+                    attributes: productAttributes,
+                    tags: Array.isArray(p.tags) ? p.tags : [],
                     sizes: availableSizes,
                 });
 

@@ -51,20 +51,33 @@ export async function POST(request) {
         );
       }
 
-      // Return user-friendly error messages
-      if (error.code === 'invalid_username') {
+      // Extract error message from WordPress response (may be nested in details)
+      let errorMessage = error.message || error.error || 'Login failed';
+
+      // Check for nested error structure
+      if (error.details && error.details.message) {
+        errorMessage = error.details.message;
+      }
+
+      // Strip HTML tags from the error message
+      errorMessage = errorMessage.replace(/<[^>]*>/g, '').trim();
+
+      // Check error code for specific messages
+      const errorCode = error.code || (error.details && error.details.code) || '';
+
+      if (errorCode.includes('invalid_username')) {
         return NextResponse.json(
           { error: 'Email/Username not found. Please check or register.' },
           { status: 401 }
         );
-      } else if (error.code === 'incorrect_password') {
+      } else if (errorCode.includes('incorrect_password')) {
         return NextResponse.json(
           { error: 'Incorrect password. Please try again.' },
           { status: 401 }
         );
       } else {
         return NextResponse.json(
-          { error: error.message || 'Login failed' },
+          { error: errorMessage },
           { status: tokenResponse.status }
         );
       }
