@@ -61,7 +61,11 @@ const ProductCard = ({ product }) => {
 
       {/* Product Info */}
       <div className="p-5">
-        <p className="text-xs text-gray-300 uppercase tracking-wider mb-1">{product.category}</p>
+        <p className="text-xs text-gray-300 uppercase tracking-wider mb-1">
+          {product.tags && product.tags.length > 0
+            ? product.tags[0].name
+            : product.category}
+        </p>
 
         <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-lavender-700 transition-colors duration-300">
           <Link

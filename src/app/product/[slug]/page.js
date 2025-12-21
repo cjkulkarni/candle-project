@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProductGallery from '@/components/ProductGallery';
+import ProductReviews from '@/components/ProductReviews';
 
 export default function ProductPage() {
     const { slug } = useParams();
@@ -19,6 +20,7 @@ export default function ProductPage() {
     const [selectedSize, setSelectedSize] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // ALWAYS define hooks first
     const handleAddToCart = useCallback(() => {
@@ -35,6 +37,11 @@ export default function ProductPage() {
 
         setQuantity(1);
     }, [product, selectedSize, quantity, addItem]);
+
+    const handleReviewSubmitted = useCallback(() => {
+        // Trigger product refresh by updating the key
+        setRefreshKey(prev => prev + 1);
+    }, []);
 
     useEffect(() => {
         if (!slug) return;
@@ -120,7 +127,7 @@ export default function ProductPage() {
         };
 
         fetchProduct();
-    }, [slug]);
+    }, [slug, refreshKey]);
 
     // ONLY rendering logic below this point
     if (isLoading) {
@@ -209,17 +216,19 @@ export default function ProductPage() {
                         </motion.div>
 
                         <motion.div
-                            className="text-2xl font-bold"
+                            className="flex items-center gap-2"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.4 }}
                         >
-                            {product.currencySymbol}{product.price.toFixed(2)}
-                            {product.originalPrice && (
-                                <span className="ml-2 text-lg line-through text-gray-500">
+                            {product.originalPrice > product.price && (
+                                <span className="text-xl line-through text-gray-500">
                                     {product.currencySymbol}{product.originalPrice.toFixed(2)}
                                 </span>
                             )}
+                            <span className="text-2xl font-bold">
+                                {product.currencySymbol}{product.price.toFixed(2)}
+                            </span>
                         </motion.div>
 
                         {product.sizes && product.sizes.length > 0 && (
@@ -299,11 +308,12 @@ export default function ProductPage() {
                             transition={{ duration: 0.5, delay: 0.8 }}
                         >
                             <Tabs defaultValue="description">
-                            <TabsList className={`grid ${(product.attributes?.length > 0 || product.tags?.length > 0) ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                            <TabsList className={`grid ${(product.attributes?.length > 0 || product.tags?.length > 0) ? 'grid-cols-4' : 'grid-cols-3'}`}>
                                 <TabsTrigger value="description">Description</TabsTrigger>
                                 {(product.attributes?.length > 0 || product.tags?.length > 0) && (
                                     <TabsTrigger value="details">Details</TabsTrigger>
                                 )}
+                                <TabsTrigger value="reviews">Reviews</TabsTrigger>
                                 <TabsTrigger value="shipping">Shipping</TabsTrigger>
                             </TabsList>
 
@@ -359,6 +369,13 @@ export default function ProductPage() {
                                     </Card>
                                 </TabsContent>
                             )}
+
+                            <TabsContent value="reviews">
+                                <ProductReviews
+                                    productSlug={slug}
+                                    onReviewSubmitted={handleReviewSubmitted}
+                                />
+                            </TabsContent>
 
                             <TabsContent value="shipping">
                                 <Card className="p-6">
