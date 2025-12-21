@@ -93,28 +93,45 @@ export default function ProductReviews({ productSlug, onReviewSubmitted }) {
     try {
       setIsSubmitting(true);
 
+      // Determine if we're updating or creating
+      const isUpdate = userReview !== null;
+      const method = isUpdate ? 'PUT' : 'POST';
+
+      const requestBody = {
+        rating,
+        review: reviewText,
+        reviewer: reviewerName,
+        reviewer_email: reviewerEmail,
+      };
+
+      // Add review_id for updates
+      if (isUpdate) {
+        requestBody.review_id = userReview.id;
+      }
+
       const response = await fetch(`/api/products/${productSlug}/reviews`, {
-        method: 'POST',
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          rating,
-          review: reviewText,
-          reviewer: reviewerName,
-          reviewer_email: reviewerEmail,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        toast.success('Review submitted successfully!');
-        setRating(0);
-        setReviewText('');
+        toast.success(isUpdate ? 'Review updated successfully!' : 'Review submitted successfully!');
 
-        // Only reset name/email if user is not authenticated
-        if (!isAuthenticated) {
-          setReviewerName('');
-          setReviewerEmail('');
+        if (!isUpdate) {
+          setRating(0);
+          setReviewText('');
+
+          // Only reset name/email if user is not authenticated
+          if (!isAuthenticated) {
+            setReviewerName('');
+            setReviewerEmail('');
+          }
+        } else {
+          // Exit editing mode after successful update
+          setIsEditing(false);
         }
 
         // Refresh reviews list
@@ -126,7 +143,7 @@ export default function ProductReviews({ productSlug, onReviewSubmitted }) {
         }
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to submit review');
+        toast.error(errorData.error || (isUpdate ? 'Failed to update review' : 'Failed to submit review'));
       }
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -235,7 +252,9 @@ export default function ProductReviews({ productSlug, onReviewSubmitted }) {
                 </div>
               </div>
               <div>
-                <p className="text-gray-700 whitespace-pre-line">{userReview.review}</p>
+                <p className="text-gray-700 whitespace-pre-line">
+                  {userReview.review.replace(/<[^>]*>/g, '')}
+                </p>
                 <p className="text-xs text-gray-500 mt-2">
                   Submitted on {new Date(userReview.date_created).toLocaleDateString()}
                 </p>
@@ -340,7 +359,9 @@ export default function ProductReviews({ productSlug, onReviewSubmitted }) {
                     {formatDate(review.date_created)}
                   </span>
                 </div>
-                <p className="text-gray-700 whitespace-pre-line">{review.review}</p>
+                <p className="text-gray-700 whitespace-pre-line">
+                  {review.review.replace(/<[^>]*>/g, '')}
+                </p>
               </Card>
             </motion.div>
           ))

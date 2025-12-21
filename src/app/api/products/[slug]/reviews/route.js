@@ -196,3 +196,89 @@ export async function POST(request, { params }) {
     );
   }
 }
+
+// PUT - Update an existing review
+export async function PUT(request, { params }) {
+  try {
+    const { slug } = await params;
+    const body = await request.json();
+    const productId = await getProductIdBySlug(slug);
+
+    if (!productId) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    const { review_id, rating, review, reviewer, reviewer_email } = body;
+
+    if (!review_id) {
+      return NextResponse.json(
+        { error: 'Review ID is required for updates' },
+        { status: 400 }
+      );
+    }
+
+    // Validation
+    if (!rating || rating < 0 || rating > 5) {
+      return NextResponse.json({ error: 'Rating must be between 0 and 5' }, { status: 400 });
+    }
+    if (!review || review.trim().length === 0) {
+      return NextResponse.json({ error: 'Review text is required' }, { status: 400 });
+    }
+    if (!reviewer || reviewer.trim().length === 0) {
+      return NextResponse.json({ error: 'Reviewer name is required' }, { status: 400 });
+    }
+    if (!reviewer_email || reviewer_email.trim().length === 0) {
+      return NextResponse.json({ error: 'Reviewer email is required' }, { status: 400 });
+    }
+
+    const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
+
+    const reviewResponse = await fetch(
+      `${WORDPRESS_API_URL}/wp-json/wc/v3/products/reviews/${review_id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          review,
+          reviewer,
+          rating,
+          status: 'approved',
+        }),
+      }
+    );
+
+    if (!reviewResponse.ok) {
+      const errorData = await reviewResponse.json().catch(() => ({}));
+      console.error('Review update error:', errorData);
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to update review' },
+        { status: reviewResponse.status }
+      );
+    }
+
+    const result = await reviewResponse.json();
+
+    // Trigger product cache refresh
+    try {
+      await fetch(`${WORDPRESS_API_URL}/wp-json/wc/v3/products/${productId}`, {
+        headers: { 'Authorization': `Basic ${auth}` },
+      });
+    } catch (cacheError) {
+      console.error('Cache refresh error:', cacheError);
+    }
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error('Update review error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error: ' + error.message },
+      { status: 500 }
+    );
+  }
+}
