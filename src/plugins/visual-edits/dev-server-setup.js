@@ -269,19 +269,14 @@ function setupDevServer(config) {
                 if (elementName !== change.component) return;
 
                 // FIXED: Conditional processing based on change type
-                console.log(
-                  `[backend] Processing change type: ${change.type || "legacy"} for element: ${elementName}`,
-                );
+
 
                 if (
                   change.type === "className" &&
                   change.className !== undefined
                 ) {
                   // CLASSNAME/TAILWIND PROCESSING
-                  console.log(
-                    `[backend] Processing className change:`,
-                    change.className,
-                  );
+
 
                   // Find existing className attribute
                   let classAttr = path.node.attributes.find(
@@ -295,19 +290,11 @@ function setupDevServer(config) {
 
                   if (classAttr) {
                     // Update existing className
-                    console.log(
-                      `[backend] Updating existing className from:`,
-                      classAttr.value?.value,
-                      "to:",
-                      change.className,
-                    );
+
                     classAttr.value = t.stringLiteral(change.className);
                   } else {
                     // Create new className attribute
-                    console.log(
-                      `[backend] Creating new className attribute:`,
-                      change.className,
-                    );
+
                     const newClassAttr = t.jsxAttribute(
                       t.jsxIdentifier("className"),
                       t.stringLiteral(change.className),
@@ -328,10 +315,7 @@ function setupDevServer(config) {
                   change.type === "textContent" &&
                   change.textContent !== undefined
                 ) {
-                  console.log(
-                    `[backend] Processing textContent change:`,
-                    change.textContent,
-                  );
+
 
                   const parentElementPath = path.parentPath;
                   if (parentElementPath && parentElementPath.isJSXElement()) {
@@ -394,10 +378,7 @@ function setupDevServer(config) {
                   change.content !== undefined
                 ) {
                   // CONTENT-ONLY PROCESSING
-                  console.log(
-                    `[backend] Processing content-only change:`,
-                    change.content.slice(0, 100),
-                  );
+
 
                   const parentElementPath = path.parentPath;
                   if (parentElementPath && parentElementPath.isJSXElement()) {

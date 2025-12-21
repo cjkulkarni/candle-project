@@ -9,15 +9,36 @@ import { toast } from 'sonner';
 
 export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
   const { updateProfile, isLoading } = useUser();
+  const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    email: '',
     phone: '',
-    address: '',
-    city: '',
-    zipCode: '',
-    country: '',
+    billing: {
+      first_name: '',
+      last_name: '',
+      company: '',
+      address_1: '',
+      address_2: '',
+      city: '',
+      postcode: '',
+      country: '',
+      state: '',
+      email: '',
+      phone: '',
+    },
+    shipping: {
+      first_name: '',
+      last_name: '',
+      company: '',
+      address_1: '',
+      address_2: '',
+      city: '',
+      postcode: '',
+      country: '',
+      state: '',
+      phone: '',
+    },
   });
   const [errors, setErrors] = useState({});
 
@@ -26,12 +47,32 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        email: user.email || '',
         phone: user.phone || '',
-        address: user.address || '',
-        city: user.city || '',
-        zipCode: user.zipCode || '',
-        country: user.country || '',
+        billing: {
+          first_name: user.billing?.first_name || user.firstName || '',
+          last_name: user.billing?.last_name || user.lastName || '',
+          company: user.billing?.company || '',
+          address_1: user.billing?.address_1 || '',
+          address_2: user.billing?.address_2 || '',
+          city: user.billing?.city || '',
+          postcode: user.billing?.postcode || '',
+          country: user.billing?.country || '',
+          state: user.billing?.state || '',
+          email: user.billing?.email || user.email || '',
+          phone: user.billing?.phone || user.phone || '',
+        },
+        shipping: {
+          first_name: user.shipping?.first_name || user.firstName || '',
+          last_name: user.shipping?.last_name || user.lastName || '',
+          company: user.shipping?.company || '',
+          address_1: user.shipping?.address_1 || '',
+          address_2: user.shipping?.address_2 || '',
+          city: user.shipping?.city || '',
+          postcode: user.shipping?.postcode || '',
+          country: user.shipping?.country || '',
+          state: user.shipping?.state || '',
+          phone: user.shipping?.phone || user.phone || '',
+        },
       });
     }
   }, [user, isOpen]);
@@ -45,12 +86,6 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
 
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
-    }
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
     }
 
     setErrors(newErrors);
@@ -71,6 +106,16 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
     }
   };
 
+  const handleAddressChange = (addressType, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [addressType]: {
+        ...prev[addressType],
+        [field]: value,
+      },
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -79,7 +124,39 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
     }
 
     try {
-      await updateProfile(formData);
+      // Convert form data to API format (camelCase address fields to underscore)
+      const apiFormData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        billing: {
+          first_name: formData.billing.first_name,
+          last_name: formData.billing.last_name,
+          company: formData.billing.company,
+          address_1: formData.billing.address_1,
+          address_2: formData.billing.address_2,
+          city: formData.billing.city,
+          postcode: formData.billing.postcode,
+          country: formData.billing.country,
+          state: formData.billing.state,
+          email: formData.billing.email,
+          phone: formData.billing.phone,
+        },
+        shipping: {
+          first_name: formData.shipping.first_name,
+          last_name: formData.shipping.last_name,
+          company: formData.shipping.company,
+          address_1: formData.shipping.address_1,
+          address_2: formData.shipping.address_2,
+          city: formData.shipping.city,
+          postcode: formData.shipping.postcode,
+          country: formData.shipping.country,
+          state: formData.shipping.state,
+          phone: formData.shipping.phone,
+        },
+      };
+
+      await updateProfile(apiFormData);
       onSave(formData);
       onClose();
     } catch (error) {
@@ -158,27 +235,6 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
                 )}
               </div>
 
-              {/* Email */}
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="your@email.com"
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-                )}
-              </div>
-
               {/* Phone */}
               <div className="md:col-span-2">
                 <label className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
@@ -199,70 +255,288 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, user }) {
 
           {/* Address Section */}
           <div className="pt-6 border-t">
+            {/* Checkbox to copy billing to shipping */}
+            <div className="mb-6 flex items-center gap-3 bg-blue-50 p-4 rounded-lg">
+              <input
+                type="checkbox"
+                id="copyBilling"
+                checked={copyBillingToShipping}
+                onChange={(e) => {
+                  setCopyBillingToShipping(e.target.checked);
+                  if (e.target.checked) {
+                    setFormData(prev => ({
+                      ...prev,
+                      shipping: {
+                        first_name: prev.billing.first_name,
+                        last_name: prev.billing.last_name,
+                        company: prev.billing.company,
+                        address_1: prev.billing.address_1,
+                        address_2: prev.billing.address_2,
+                        city: prev.billing.city,
+                        postcode: prev.billing.postcode,
+                        country: prev.billing.country,
+                        state: prev.billing.state,
+                        phone: prev.billing.phone,
+                      }
+                    }));
+                  }
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+              />
+              <label htmlFor="copyBilling" className="cursor-pointer text-sm font-medium text-gray-700">
+                Use billing address as shipping address
+              </label>
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <MapPin className="h-5 w-5 text-lavender-600" />
-              Shipping Address
+              Billing Address
             </h3>
             <div className="space-y-4">
-              {/* Address */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.billing.first_name}
+                    onChange={(e) => handleAddressChange('billing', 'first_name', e.target.value)}
+                    placeholder="John"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.billing.last_name}
+                    onChange={(e) => handleAddressChange('billing', 'last_name', e.target.value)}
+                    placeholder="Doe"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Street Address
-                </label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Company</label>
                 <input
                   type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
+                  value={formData.billing.company}
+                  onChange={(e) => handleAddressChange('billing', 'company', e.target.value)}
+                  placeholder="Company Name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Address Line 1</label>
+                <input
+                  type="text"
+                  value={formData.billing.address_1}
+                  onChange={(e) => handleAddressChange('billing', 'address_1', e.target.value)}
                   placeholder="123 Main Street"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Address Line 2</label>
+                <input
+                  type="text"
+                  value={formData.billing.address_2}
+                  onChange={(e) => handleAddressChange('billing', 'address_2', e.target.value)}
+                  placeholder="Apartment, Suite, etc."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* City */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    City
-                  </label>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
                   <input
                     type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
+                    value={formData.billing.city}
+                    onChange={(e) => handleAddressChange('billing', 'city', e.target.value)}
                     placeholder="New York"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
                   />
                 </div>
-
-                {/* Postal Code */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Postal Code
-                  </label>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Postal Code</label>
                   <input
                     type="text"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleChange}
+                    value={formData.billing.postcode}
+                    onChange={(e) => handleAddressChange('billing', 'postcode', e.target.value)}
                     placeholder="10001"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
                   />
                 </div>
               </div>
 
-              {/* Country */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Country</label>
+                  <input
+                    type="text"
+                    value={formData.billing.country}
+                    onChange={(e) => handleAddressChange('billing', 'country', e.target.value)}
+                    placeholder="United States"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">State</label>
+                  <input
+                    type="text"
+                    value={formData.billing.state}
+                    onChange={(e) => handleAddressChange('billing', 'state', e.target.value)}
+                    placeholder="NY"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={formData.billing.email}
+                    onChange={(e) => handleAddressChange('billing', 'email', e.target.value)}
+                    placeholder="billing@email.com"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    value={formData.billing.phone}
+                    onChange={(e) => handleAddressChange('billing', 'phone', e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Shipping Address Section */}
+          <div className="pt-6 border-t">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-600" />
+              Shipping Address
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.shipping.first_name}
+                    onChange={(e) => handleAddressChange('shipping', 'first_name', e.target.value)}
+                    placeholder="John"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.shipping.last_name}
+                    onChange={(e) => handleAddressChange('shipping', 'last_name', e.target.value)}
+                    placeholder="Doe"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Country
-                </label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Company</label>
                 <input
                   type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  placeholder="United States"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lavender-500 transition"
+                  value={formData.shipping.company}
+                  onChange={(e) => handleAddressChange('shipping', 'company', e.target.value)}
+                  placeholder="Company Name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Address Line 1</label>
+                <input
+                  type="text"
+                  value={formData.shipping.address_1}
+                  onChange={(e) => handleAddressChange('shipping', 'address_1', e.target.value)}
+                  placeholder="123 Main Street"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Address Line 2</label>
+                <input
+                  type="text"
+                  value={formData.shipping.address_2}
+                  onChange={(e) => handleAddressChange('shipping', 'address_2', e.target.value)}
+                  placeholder="Apartment, Suite, etc."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
+                  <input
+                    type="text"
+                    value={formData.shipping.city}
+                    onChange={(e) => handleAddressChange('shipping', 'city', e.target.value)}
+                    placeholder="New York"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Postal Code</label>
+                  <input
+                    type="text"
+                    value={formData.shipping.postcode}
+                    onChange={(e) => handleAddressChange('shipping', 'postcode', e.target.value)}
+                    placeholder="10001"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Country</label>
+                  <input
+                    type="text"
+                    value={formData.shipping.country}
+                    onChange={(e) => handleAddressChange('shipping', 'country', e.target.value)}
+                    placeholder="United States"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">State</label>
+                  <input
+                    type="text"
+                    value={formData.shipping.state}
+                    onChange={(e) => handleAddressChange('shipping', 'state', e.target.value)}
+                    placeholder="NY"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.shipping.phone}
+                  onChange={(e) => handleAddressChange('shipping', 'phone', e.target.value)}
+                  placeholder="+1 (555) 000-0000"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
               </div>
             </div>

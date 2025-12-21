@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Calendar, Edit2, LogOut, Shield, Download, Heart, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Edit2, LogOut, Shield, Download, Heart, Clock, Package, Loader2 } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +16,37 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, logout, isAuthenticated } = useUser();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchOrders();
+    }
+  }, [user]);
+
+  const fetchOrders = async () => {
+    try {
+      setIsLoadingOrders(true);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/orders?customer_id=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+console.log('Fetch orders response:', response);
+      if (response.ok) {
+        const ordersData = await response.json();
+        setOrders(ordersData);
+      } else {
+        console.error('Failed to fetch orders');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -77,7 +108,7 @@ export default function ProfilePage() {
               >
                 <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-lavender-200 shadow-lg">
                   <Image
-                    src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=random'}
+                    src={user?.avatar1 || 'https://ui-avatars.com/api/?name=User&background=random'}
                     alt={`${user?.firstName} ${user?.lastName}`}
                     width={96}
                     height={96}
@@ -184,45 +215,141 @@ export default function ProfilePage() {
 
             {/* Address Tab */}
             <TabsContent value="address" className="p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Shipping Address</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">Address</label>
-                  <p className="text-lg text-gray-900">{user?.address || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">City</label>
-                  <p className="text-lg text-gray-900">{user?.city || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">Postal Code</label>
-                  <p className="text-lg text-gray-900">{user?.zipCode || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 block mb-2">Country</label>
-                  <p className="text-lg text-gray-900">{user?.country || 'Not provided'}</p>
-                </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-8">Addresses</h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Billing Address */}
+                <Card className="p-6 border-2 border-lavender-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Billing Address</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">First Name</label>
+                      <p className="text-gray-900">{user?.billing?.first_name || user?.firstName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Last Name</label>
+                      <p className="text-gray-900">{user?.billing?.last_name || user?.lastName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Company</label>
+                      <p className="text-gray-900">{user?.billing?.company || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 1</label>
+                      <p className="text-gray-900">{user?.billing?.address_1 || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 2</label>
+                      <p className="text-gray-900">{user?.billing?.address_2 || 'Not provided'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">City</label>
+                        <p className="text-gray-900">{user?.billing?.city || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Postal Code</label>
+                        <p className="text-gray-900">{user?.billing?.postcode || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Country</label>
+                        <p className="text-gray-900">{user?.billing?.country || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">State</label>
+                        <p className="text-gray-900">{user?.billing?.state || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Email</label>
+                      <p className="text-gray-900">{user?.billing?.email || user?.email || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Phone</label>
+                      <p className="text-gray-900">{user?.billing?.phone || user?.phone || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Shipping Address */}
+                <Card className="p-6 border-2 border-blue-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Shipping Address</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">First Name</label>
+                      <p className="text-gray-900">{user?.shipping?.first_name || user?.firstName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Last Name</label>
+                      <p className="text-gray-900">{user?.shipping?.last_name || user?.lastName || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Company</label>
+                      <p className="text-gray-900">{user?.shipping?.company || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 1</label>
+                      <p className="text-gray-900">{user?.shipping?.address_1 || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Address Line 2</label>
+                      <p className="text-gray-900">{user?.shipping?.address_2 || 'Not provided'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">City</label>
+                        <p className="text-gray-900">{user?.shipping?.city || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Postal Code</label>
+                        <p className="text-gray-900">{user?.shipping?.postcode || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Country</label>
+                        <p className="text-gray-900">{user?.shipping?.country || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 block mb-2">State</label>
+                        <p className="text-gray-900">{user?.shipping?.state || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Phone</label>
+                      <p className="text-gray-900">{user?.shipping?.phone || user?.phone || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </Card>
               </div>
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEditModalOpen(true)}
-                className="mt-6 flex items-center gap-2 bg-lavender-600 text-white px-4 py-2 rounded-lg hover:bg-lavender-700 transition"
+                className="mt-8 flex items-center gap-2 bg-lavender-600 text-white px-4 py-2 rounded-lg hover:bg-lavender-700 transition"
               >
                 <Edit2 className="h-4 w-4" />
-                Edit Address
+                Edit Addresses
               </motion.button>
             </TabsContent>
 
             {/* Orders Tab */}
             <TabsContent value="orders" className="p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Orders</h2>
-              <div className="space-y-4">
+
+              {isLoadingOrders ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-lavender-600" />
+                </div>
+              ) : orders.length === 0 ? (
                 <Card className="p-6 border-2 border-dashed border-gray-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="bg-lavender-100 p-4 rounded-lg">
-                        <Download className="h-6 w-6 text-lavender-600" />
+                        <Package className="h-6 w-6 text-lavender-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">No orders yet</p>
@@ -234,7 +361,81 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 </Card>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <Card key={order.id} className="p-6 border-2 hover:border-lavender-300 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                          <div className="bg-lavender-100 p-3 rounded-lg">
+                            <Package className="h-6 w-6 text-lavender-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-bold text-gray-900">Order #{order.number}</h3>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {new Date(order.date_created).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-700">
+                                {order.line_items.length} item{order.line_items.length !== 1 ? 's' : ''}
+                              </p>
+                              <p className="text-sm font-medium text-gray-900">
+                                Total: {order.currency_symbol}{order.total}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Items in this order:</h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {order.line_items.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {item.image?.src && (
+                                  <div className="relative w-10 h-10 rounded overflow-hidden">
+                                    <Image
+                                      src={item.image.src}
+                                      alt={item.name}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <span className="text-gray-700">{item.name}</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className="text-gray-500">x{item.quantity}</span>
+                                <span className="font-medium text-gray-900">
+                                  {order.currency_symbol}{item.total}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* Security Tab */}

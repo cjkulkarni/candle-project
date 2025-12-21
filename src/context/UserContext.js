@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { wpApiClient } from '@/lib/wpApiClient';
 
 const UserContext = createContext(null);
 
@@ -9,46 +10,54 @@ export function UserProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount and validate token
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const initializeAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('authToken');
+
+        if (storedUser && token) {
+          // Validate token with WordPress API
+          const isValid = await wpApiClient.validateToken(token);
+          
+          if (isValid.valid) {
+            setUser(JSON.parse(storedUser));
+          } else {
+            // Token is invalid, clear storage
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+            setUser(null);
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Error loading user:', err);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   const register = async (userData) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulate API call - replace with actual API
-      const newUser = {
-        id: Date.now().toString(),
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone || '',
-        address: userData.address || '',
-        city: userData.city || '',
-        zipCode: userData.zipCode || '',
-        country: userData.country || '',
-        createdAt: new Date().toISOString(),
-        avatar: `https://ui-avatars.com/api/?name=${userData.firstName}+${userData.lastName}&background=random`,
-      };
+      // Call WordPress API
+      const response = await wpApiClient.register(userData);
 
-      // Store in localStorage (in production, send to backend)
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setUser(newUser);
-      return newUser;
+      // Store token and user
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
+      return response.user;
     } catch (err) {
-      setError(err.message);
-      throw err;
+      const errorMessage = err.message || 'Registration failed';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -58,34 +67,25 @@ export function UserProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulate API call - replace with actual API
-      const userData = {
-        id: Date.now().toString(),
-        email,
-        firstName: 'User',
-        lastName: 'Name',
-        phone: '',
-        address: '',
-        city: '',
-        zipCode: '',
-        country: '',
-        createdAt: new Date().toISOString(),
-        avatar: `https://ui-avatars.com/api/?name=User+Name&background=random`,
-      };
-
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return userData;
+      // Call WordPress API
+      const response = await wpApiClient.login(email, password);
+      // Store token and user
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('userResponse', JSON.stringify(response));
+      setUser(response.user);
+      return response.user;
     } catch (err) {
-      setError(err.message);
-      throw err;
+      const errorMessage = err.message || 'Login failed';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
+    wpApiClient.logout();
     setUser(null);
   };
 
@@ -93,18 +93,26 @@ export function UserProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
-      const updatedUser = {
-        ...user,
-        ...updatedData,
-        avatar: updatedData.avatar || user.avatar,
-      };
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
+      // Send data to API - format should match the API response format
+      // The API expects: first_name, last_name, phone, billing{...}, shipping{...}
+      const updatedUser = await wpApiClient.updateUserProfile(
+        updatedData,
+        token
+      );
+
+      // Update local storage and state
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       return updatedUser;
     } catch (err) {
-      setError(err.message);
-      throw err;
+      const errorMessage = err.message || 'Failed to update profile';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }

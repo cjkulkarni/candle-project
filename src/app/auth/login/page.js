@@ -61,11 +61,21 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      toast.success('Login successful! Welcome back.');
+      toast.success('Login successful! Redirecting to your profile...');
       router.push('/profile');
     } catch (error) {
-      toast.error('Login failed. Please try again.');
       console.error('Login error:', error);
+      
+      // Handle specific WordPress API errors
+      if (error.message.includes('invalid_username')) {
+        toast.error('Invalid email or username');
+      } else if (error.message.includes('incorrect_password')) {
+        toast.error('Incorrect password');
+      } else if (error.message.includes('invalid_credentials')) {
+        toast.error('Invalid credentials. Please check your email and password.');
+      } else {
+        toast.error(error.message || 'Login failed. Please try again.');
+      }
     }
   };
 
