@@ -14,31 +14,62 @@ export async function POST(request) {
       );
     }
 
+    console.log('Adding item to cart:', { id, quantity });
+
+    // Forward all cookies from the client request to WordPress
+    const cookieHeader = request.headers.get('cookie') || '';
+    const nonce = request.headers.get('x-wc-store-api-nonce') || '';
+
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    // Include nonce if available
+    if (nonce) {
+      headers['Nonce'] = nonce;
+    }
+
+    // Include cookies for session management
+    if (cookieHeader) {
+      headers['Cookie'] = cookieHeader;
+    }
+
     const response = await fetch(
       `${WORDPRESS_API_URL}/wp-json/wc/store/v1/cart/add-item`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ id, quantity }),
       }
     );
 
+    const responseData = await response.json();
+    console.log('Add to cart response:', response.status, responseData);
+
     if (!response.ok) {
-      const error = await response.json();
       return NextResponse.json(
-        { error: error.message || 'Failed to add item to cart' },
+        { error: responseData.message || responseData.error || 'Failed to add item to cart' },
         { status: response.status }
       );
     }
 
-    const cart = await response.json();
-    return NextResponse.json(cart);
+    // Extract nonce and cookies from WooCommerce response
+    const newNonce = response.headers.get('nonce') || response.headers.get('x-wc-store-api-nonce');
+    const setCookies = response.headers.get('set-cookie');
+
+    const responseHeaders = {};
+    if (newNonce) {
+      responseHeaders['X-WC-Store-API-Nonce'] = newNonce;
+    }
+    if (setCookies) {
+      responseHeaders['Set-Cookie'] = setCookies;
+    }
+
+    return NextResponse.json(responseData, { headers: responseHeaders });
   } catch (error) {
     console.error('Add to cart error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error: ' + error.message },
       { status: 500 }
     );
   }

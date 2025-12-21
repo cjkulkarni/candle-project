@@ -4,17 +4,30 @@ const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL;
 
 export async function GET(request) {
   try {
-    const response = await fetch(`${WORDPRESS_API_URL}/wp-json/wc/store/v1/cart`);
+    const response = await fetch(`${WORDPRESS_API_URL}/wp-json/wc/store/v1/cart`, {
+      headers: {
+        'Nonce': request.headers.get('Nonce') || '',
+      },
+      credentials: 'include',
+    });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Cart fetch error:', errorData);
       return NextResponse.json(
-        { error: 'Failed to fetch cart' },
+        { error: errorData.message || 'Failed to fetch cart' },
         { status: response.status }
       );
     }
 
     const cart = await response.json();
-    return NextResponse.json(cart);
+
+    // Extract nonce from response headers if available
+    const nonce = response.headers.get('Nonce') || response.headers.get('X-WC-Store-API-Nonce');
+
+    return NextResponse.json(cart, {
+      headers: nonce ? { 'X-WC-Store-API-Nonce': nonce } : {},
+    });
   } catch (error) {
     console.error('Get cart error:', error);
     return NextResponse.json(
