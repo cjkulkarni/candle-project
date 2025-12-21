@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
@@ -23,6 +24,7 @@ export default function CartDrawer() {
     updateQuantity,
     cartTotal,
     cartCount,
+    loading,
   } = useCart();
 
   return (
@@ -88,9 +90,9 @@ export default function CartDrawer() {
                         <div className="flex items-center border rounded-lg">
                           <button
                             onClick={() =>
-                              updateQuantity(item.id, item.size, item.quantity - 1)
+                              updateQuantity(item.key, item.quantity - 1)
                             }
-                            disabled={item.quantity <= 1}
+                            disabled={item.quantity <= 1 || loading}
                             className="p-2 hover:bg-gray-50 disabled:opacity-50"
                           >
                             <Minus className="h-4 w-4" />
@@ -98,15 +100,16 @@ export default function CartDrawer() {
                           <span className="px-4 py-2">{item.quantity}</span>
                           <button
                             onClick={() =>
-                              updateQuantity(item.id, item.size, item.quantity + 1)
+                              updateQuantity(item.key, item.quantity + 1)
                             }
+                            disabled={loading}
                             className="p-2 hover:bg-gray-50"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
                         </div>
                         <p className="font-medium">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {item.currencySymbol}{(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -119,11 +122,15 @@ export default function CartDrawer() {
             <div className="border-t pt-6">
               <div className="flex justify-between text-base font-medium text-gray-900 mb-6">
                 <p>Subtotal</p>
-                <p>${cartTotal.toFixed(2)}</p>
+                <p>{items[0]?.currencySymbol || '₹'}{cartTotal.toFixed(2)}</p>
               </div>
 
               <div className="space-y-4">
-                <Button className="w-full">Proceed to Checkout</Button>
+                <Link href="/checkout" onClick={() => toggleCart(false)}>
+                  <Button className="w-full" disabled={loading || items.length === 0}>
+                    Proceed to Checkout
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   className="w-full"

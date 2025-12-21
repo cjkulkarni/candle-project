@@ -3,13 +3,13 @@
  * Fetches a single product by ID from WooCommerce
  */
 
-import { getProductById } from '@/lib/backendService';
+import { getProductBySlug } from '@/lib/backendService';
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
-
-    if (!id) {
+    const { slug } = await params;
+    console.log(slug);
+    if (!slug) {
       return Response.json(
         {
           success: false,
@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const product = await getProductById(id);
+    const product = await getProductBySlug(slug);
 
     return Response.json(
       {

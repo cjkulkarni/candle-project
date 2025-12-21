@@ -14,31 +14,55 @@ export async function POST(request) {
       );
     }
 
+    const cookieHeader = request.headers.get('cookie') || '';
+    const nonce = request.headers.get('x-wc-store-api-nonce') || '';
+
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    if (nonce) {
+      headers['Nonce'] = nonce;
+    }
+
+    if (cookieHeader) {
+      headers['Cookie'] = cookieHeader;
+    }
+
     const response = await fetch(
       `${WORDPRESS_API_URL}/wp-json/wc/store/v1/cart/remove-item`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ key }),
       }
     );
 
+    const responseData = await response.json();
+
     if (!response.ok) {
-      const error = await response.json();
       return NextResponse.json(
-        { error: error.message || 'Failed to remove item from cart' },
+        { error: responseData.message || responseData.error || 'Failed to remove item from cart' },
         { status: response.status }
       );
     }
 
-    const cart = await response.json();
-    return NextResponse.json(cart);
+    const newNonce = response.headers.get('nonce') || response.headers.get('x-wc-store-api-nonce');
+    const setCookies = response.headers.get('set-cookie');
+
+    const responseHeaders = {};
+    if (newNonce) {
+      responseHeaders['X-WC-Store-API-Nonce'] = newNonce;
+    }
+    if (setCookies) {
+      responseHeaders['Set-Cookie'] = setCookies;
+    }
+
+    return NextResponse.json(responseData, { headers: responseHeaders });
   } catch (error) {
     console.error('Remove from cart error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error: ' + error.message },
       { status: 500 }
     );
   }

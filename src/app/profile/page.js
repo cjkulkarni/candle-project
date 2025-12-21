@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Calendar, Edit2, LogOut, Shield, Download, Heart, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Edit2, LogOut, Shield, Download, Heart, Clock, Package, Loader2 } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +16,37 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, logout, isAuthenticated } = useUser();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchOrders();
+    }
+  }, [user]);
+
+  const fetchOrders = async () => {
+    try {
+      setIsLoadingOrders(true);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/orders?customer_id=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+console.log('Fetch orders response:', response);
+      if (response.ok) {
+        const ordersData = await response.json();
+        setOrders(ordersData);
+      } else {
+        console.error('Failed to fetch orders');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -308,12 +339,17 @@ export default function ProfilePage() {
             {/* Orders Tab */}
             <TabsContent value="orders" className="p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Orders</h2>
-              <div className="space-y-4">
+
+              {isLoadingOrders ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-lavender-600" />
+                </div>
+              ) : orders.length === 0 ? (
                 <Card className="p-6 border-2 border-dashed border-gray-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="bg-lavender-100 p-4 rounded-lg">
-                        <Download className="h-6 w-6 text-lavender-600" />
+                        <Package className="h-6 w-6 text-lavender-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">No orders yet</p>
@@ -325,7 +361,81 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 </Card>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <Card key={order.id} className="p-6 border-2 hover:border-lavender-300 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                          <div className="bg-lavender-100 p-3 rounded-lg">
+                            <Package className="h-6 w-6 text-lavender-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-bold text-gray-900">Order #{order.number}</h3>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {new Date(order.date_created).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-700">
+                                {order.line_items.length} item{order.line_items.length !== 1 ? 's' : ''}
+                              </p>
+                              <p className="text-sm font-medium text-gray-900">
+                                Total: {order.currency_symbol}{order.total}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Items in this order:</h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {order.line_items.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {item.image?.src && (
+                                  <div className="relative w-10 h-10 rounded overflow-hidden">
+                                    <Image
+                                      src={item.image.src}
+                                      alt={item.name}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <span className="text-gray-700">{item.name}</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className="text-gray-500">x{item.quantity}</span>
+                                <span className="font-medium text-gray-900">
+                                  {order.currency_symbol}{item.total}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* Security Tab */}

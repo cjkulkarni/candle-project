@@ -69,7 +69,6 @@ export function UserProvider({ children }) {
     try {
       // Call WordPress API
       const response = await wpApiClient.login(email, password);
-      console.log(response);
       // Store token and user
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));

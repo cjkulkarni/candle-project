@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { toast } from 'sonner';
 
 const CartContext = createContext(null);
 
@@ -8,24 +9,37 @@ const CartContext = createContext(null);
 const initialState = {
   items: [],
   isOpen: false,
+  cartKey: null, // WooCommerce cart session key
+  loading: false,
 };
 
 // Action types
 export const CART_ACTIONS = {
+  SET_CART: 'SET_CART',
   ADD_ITEM: 'ADD_ITEM',
   REMOVE_ITEM: 'REMOVE_ITEM',
   UPDATE_QUANTITY: 'UPDATE_QUANTITY',
   TOGGLE_CART: 'TOGGLE_CART',
   CLEAR_CART: 'CLEAR_CART',
+  SET_LOADING: 'SET_LOADING',
 };
 
 // Reducer function
 function cartReducer(state, action) {
   switch (action.type) {
+    case CART_ACTIONS.SET_CART: {
+      return {
+        ...state,
+        items: action.payload.items || [],
+        cartKey: action.payload.cartKey || null,
+        loading: false,
+      };
+    }
+
     case CART_ACTIONS.ADD_ITEM: {
       // Add new item (existing items are handled in addItem function via updateQuantity)
-      return { 
-        ...state, 
+      return {
+        ...state,
         items: [...state.items, action.payload],
         isOpen: true // Open cart when adding items
       };
@@ -65,6 +79,13 @@ function cartReducer(state, action) {
       };
     }
 
+    case CART_ACTIONS.SET_LOADING: {
+      return {
+        ...state,
+        loading: action.payload,
+      };
+    }
+
     default:
       return state;
   }
@@ -73,33 +94,191 @@ function cartReducer(state, action) {
 // Provider component
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [nonce, setNonce] = React.useState('');
 
-  const addItem = (item) => {
-    // Check if item already exists in cart
-    const existingItem = state.items.find(
-      cartItem => cartItem.id === item.id && cartItem.size === item.size
-    );
+  // Fetch cart and nonce from WooCommerce on mount
+  useEffect(() => {
+    fetchCartAndNonce();
+  }, []);
 
-    if (existingItem) {
-      // Item already exists, update quantity by adding to existing quantity
-      updateQuantity(item.id, item.size, existingItem.quantity + item.quantity);
-      // Also open the cart
-      dispatch({ type: CART_ACTIONS.TOGGLE_CART, payload: true });
-    } else {
-      // New item, add it to cart
-      dispatch({ type: CART_ACTIONS.ADD_ITEM, payload: item });
+  const fetchCartAndNonce = async () => {
+    try {
+      const response = await fetch('/api/cart/nonce');
+      if (response.ok) {
+        const data = await response.json();
+        setNonce(data.nonce || '');
+        const items = parseWooCommerceCart(data.cart);
+        dispatch({
+          type: CART_ACTIONS.SET_CART,
+          payload: { items, cartKey: data.cart?.cart_key },
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching cart and nonce:', error);
     }
   };
 
-  const removeItem = (item) => {
-    dispatch({ type: CART_ACTIONS.REMOVE_ITEM, payload: item });
+  const fetchCart = async () => {
+    try {
+      const response = await fetch('/api/cart', {
+        headers: {
+          'X-WC-Store-API-Nonce': nonce,
+        },
+      });
+      if (response.ok) {
+        const cartData = await response.json();
+        const items = parseWooCommerceCart(cartData);
+        dispatch({
+          type: CART_ACTIONS.SET_CART,
+          payload: { items, cartKey: cartData.cart_key },
+        });
+
+        // Update nonce if returned
+        const newNonce = response.headers.get('X-WC-Store-API-Nonce');
+        if (newNonce) {
+          setNonce(newNonce);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
   };
 
-  const updateQuantity = (id, size, quantity) => {
-    dispatch({
-      type: CART_ACTIONS.UPDATE_QUANTITY,
-      payload: { id, size, quantity },
-    });
+  const parseWooCommerceCart = (cartData) => {
+    if (!cartData || !cartData.items) return [];
+
+    return cartData.items.map(item => ({
+      id: item.id,
+      key: item.key, // WooCommerce cart item key for updates/removal
+      name: item.name,
+      price: parseFloat(item.prices.price) / 100, // Convert from paise to rupees
+      image: item.images?.[0]?.src || '/placeholder.jpg',
+      quantity: item.quantity,
+      size: item.variation?.[0]?.value || 'Default',
+      currencySymbol: item.prices?.currency_symbol || '₹',
+    }));
+  };
+
+  const addItem = async (item) => {
+    try {
+      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
+
+      const response = await fetch('/api/cart/add-item', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-WC-Store-API-Nonce': nonce,
+        },
+        body: JSON.stringify({
+          id: item.id,
+          quantity: item.quantity,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add item to cart');
+      }
+
+      const cartData = await response.json();
+      const items = parseWooCommerceCart(cartData);
+
+      dispatch({
+        type: CART_ACTIONS.SET_CART,
+        payload: { items, cartKey: cartData.cart_key },
+      });
+
+      // Update nonce if returned
+      const newNonce = response.headers.get('X-WC-Store-API-Nonce');
+      if (newNonce) {
+        setNonce(newNonce);
+      }
+
+      dispatch({ type: CART_ACTIONS.TOGGLE_CART, payload: true });
+      toast.success(`${item.name} added to cart!`);
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      toast.error(error.message || 'Failed to add item to cart');
+      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: false });
+    }
+  };
+
+  const removeItem = async (item) => {
+    try {
+      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
+
+      const response = await fetch('/api/cart/remove-item', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-WC-Store-API-Nonce': nonce,
+        },
+        body: JSON.stringify({ key: item.key }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove item from cart');
+      }
+
+      const cartData = await response.json();
+      const items = parseWooCommerceCart(cartData);
+
+      dispatch({
+        type: CART_ACTIONS.SET_CART,
+        payload: { items, cartKey: cartData.cart_key },
+      });
+
+      // Update nonce if returned
+      const newNonce = response.headers.get('X-WC-Store-API-Nonce');
+      if (newNonce) {
+        setNonce(newNonce);
+      }
+
+      toast.success('Item removed from cart');
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      toast.error(error.message || 'Failed to remove item from cart');
+      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: false });
+    }
+  };
+
+  const updateQuantity = async (itemKey, quantity) => {
+    try {
+      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
+
+      const response = await fetch('/api/cart/update-item', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-WC-Store-API-Nonce': nonce,
+        },
+        body: JSON.stringify({ key: itemKey, quantity }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update item quantity');
+      }
+
+      const cartData = await response.json();
+      const items = parseWooCommerceCart(cartData);
+
+      dispatch({
+        type: CART_ACTIONS.SET_CART,
+        payload: { items, cartKey: cartData.cart_key },
+      });
+
+      // Update nonce if returned
+      const newNonce = response.headers.get('X-WC-Store-API-Nonce');
+      if (newNonce) {
+        setNonce(newNonce);
+      }
+    } catch (error) {
+      console.error('Error updating item quantity:', error);
+      toast.error(error.message || 'Failed to update item quantity');
+      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: false });
+    }
   };
 
   const toggleCart = (isOpen) => {
@@ -125,11 +304,14 @@ export function CartProvider({ children }) {
       value={{
         items: state.items,
         isOpen: state.isOpen,
+        loading: state.loading,
+        nonce,
         addItem,
         removeItem,
         updateQuantity,
         toggleCart,
         clearCart,
+        fetchCart,
         cartTotal,
         cartCount,
       }}

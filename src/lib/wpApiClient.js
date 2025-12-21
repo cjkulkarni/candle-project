@@ -35,15 +35,28 @@ export const wpApiClient = {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || error.message || 'Login failed');
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || 'Login failed';
+          // Strip HTML tags from error message (WordPress may return HTML)
+          errorMessage = errorMessage.replace(/<[^>]*>/g, '').trim();
+        } catch (jsonError) {
+          // If JSON parsing fails, use status code
+          errorMessage = `Login failed with status ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      // Ensure we always throw an Error object with a message property
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(String(error) || 'Login failed');
     }
   },
 
