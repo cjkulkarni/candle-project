@@ -5,19 +5,89 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
-import { candleProducts, categories } from '@/data/mockData';
 import { motion } from "framer-motion";
 import { container, textContainer, itemLeft, itemRight, cardVariant, containerVariant, textBounce } from '@/utils/motionVariants';
 
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
-  const featuredProducts = candleProducts.filter(p => p.featured);
+  const [bestsellerProducts, setBestsellerProducts] = useState([]);
+  const [loadingBestsellers, setLoadingBestsellers] = useState(true);
+  const [shopCategories, setShopCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    async function fetchProductsData() {
+      try {
+        // Fetch all products to get bestsellers and extract categories
+        const productsRes = await fetch('/api/products?perPage=50');
+        const productsData = await productsRes.json();
+
+        if (productsData.success && productsData.data) {
+          // Filter products that have 'bestseller' category
+          const bestsellerItems = productsData.data.filter(product =>
+            product.categories?.some(cat =>
+              cat.slug?.toLowerCase() === 'bestseller' ||
+              cat.name?.toLowerCase() === 'bestseller'
+            )
+          );
+
+          // Transform WooCommerce product format to match ProductCard expectations
+          const transformedProducts = bestsellerItems.slice(0, 4).map(product => ({
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            price: (product.prices?.price / 100).toFixed(2),
+            originalPrice: product.prices?.regular_price ? (product.prices.regular_price / 100).toFixed(2) : null,
+            currency_symbol: product.prices?.currency_symbol || '₹',
+            image: product.images?.[0]?.src || '/placeholder.jpg',
+            category: product.categories?.[0]?.name || 'Candle',
+            rating: Math.round(parseFloat(product.average_rating) || 4),
+            sale: product.on_sale,
+            tags: product.tags || [],
+          }));
+          setBestsellerProducts(transformedProducts);
+
+          // Extract unique categories from all products (excluding bestseller)
+          const categoryMap = new Map();
+          productsData.data.forEach(product => {
+            product.categories?.forEach(cat => {
+              if (cat.slug?.toLowerCase() !== 'bestseller' && cat.name?.toLowerCase() !== 'bestseller') {
+                if (!categoryMap.has(cat.id)) {
+                  categoryMap.set(cat.id, {
+                    id: cat.id,
+                    name: cat.name,
+                    slug: cat.slug,
+                    image: product.images?.[0]?.src || '/placeholder.jpg',
+                    count: 1,
+                  });
+                } else {
+                  categoryMap.get(cat.id).count++;
+                }
+              }
+            });
+          });
+
+          // Convert to array and take first 3 categories
+          const categoriesArray = Array.from(categoryMap.values()).slice(0, 3);
+          setShopCategories(categoriesArray);
+        }
+      } catch (error) {
+        console.error('Error fetching products data:', error);
+      } finally {
+        setLoadingBestsellers(false);
+        setLoadingCategories(false);
+      }
+    }
+
+    fetchProductsData();
   }, []);
 
 
@@ -195,23 +265,33 @@ export default function Home() {
             <p className="text-sm uppercase tracking-widest text-lavender-700 mb-2 font-light">Check out our</p>
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Best Sellers</h2>
           </div>
-          <motion.div
-            variants={containerVariant}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
-          >
-            {featuredProducts.map((product, index) => (
-              <div
-                key={product.id}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </motion.div>
+          {loadingBestsellers ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="bg-gray-100 rounded-lg aspect-square animate-pulse" />
+              ))}
+            </div>
+          ) : bestsellerProducts.length > 0 ? (
+            <motion.div
+              variants={containerVariant}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.2 }}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+            >
+              {bestsellerProducts.map((product, index) => (
+                <div
+                  key={product.id}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </motion.div>
+          ) : (
+            <p className="text-center text-gray-500">No bestseller products available.</p>
+          )}
         </div>
       </section>
 
@@ -250,43 +330,53 @@ export default function Home() {
             <p className="text-sm uppercase tracking-widest text-lavender-700 mb-2 font-light">New Candles</p>
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Shop by Category</h2>
           </div>
-          <motion.div
-            variants={containerVariant}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category.id}
-                variants={cardVariant}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                <Link
-
-                  href="/shop"
-                  className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
-                  style={{ animationDelay: `${index * 150}ms` }}
+          {loadingCategories ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, index) => (
+                <div key={index} className="bg-gray-200 rounded-2xl aspect-square animate-pulse" />
+              ))}
+            </div>
+          ) : shopCategories.length > 0 ? (
+            <motion.div
+              variants={containerVariant}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.2 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
+              {shopCategories.map((category, index) => (
+                <motion.div
+                  key={category.id}
+                  variants={cardVariant}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
                 >
-                  <div className="aspect-square overflow-hidden">
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      width={400}
-                      height={400}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl font-serif font-bold mb-2">{category.name}</h3>
-                    <p className="text-sm opacity-90">{category.count} Products</p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <Link
+                    href={`/shop?category=${category.name}`}
+                    className="group relative block overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                    style={{ animationDelay: `${index * 150}ms` }}
+                  >
+                    <div className="aspect-square overflow-hidden">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        width={400}
+                        height={400}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <h3 className="text-2xl font-serif font-bold mb-2">{category.name}</h3>
+                      <p className="text-sm opacity-90">{category.count} Products</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <p className="text-center text-gray-500">No categories available.</p>
+          )}
         </div>
       </section>
     </div>

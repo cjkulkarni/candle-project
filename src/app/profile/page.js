@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Calendar, Edit2, LogOut, Shield, Download, Heart, Clock, Package, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Edit2, LogOut, Shield, Download, Heart, Clock, Package, Loader2, FileDown } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
+import { downloadInvoice } from '@/lib/generateInvoice';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -400,7 +401,17 @@ console.log('Fetch orders response:', response);
                             </div>
                           </div>
                         </div>
-                        
+
+                        {/* Download Invoice Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadInvoice(order)}
+                          className="flex items-center gap-2"
+                        >
+                          <FileDown className="h-4 w-4" />
+                          Download Invoice
+                        </Button>
                       </div>
 
                       {/* Order Items */}

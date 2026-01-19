@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Minus, Plus, ShoppingCart, Star, Heart } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Star, Heart, Palette } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -300,6 +301,21 @@ export default function ProductPage() {
                             <Button variant="outline" size="icon">
                                 <Heart className="h-5 w-5" />
                             </Button>
+                        </motion.div>
+
+                        {/* Customize Your Candle Link */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.75 }}
+                        >
+                            <Link
+                                href="/customize"
+                                className="flex items-center gap-2 text-lavender-700 hover:text-lavender-800 font-medium transition-colors"
+                            >
+                                <Palette className="h-5 w-5" />
+                                Want something unique? Customise your Candle
+                            </Link>
                         </motion.div>
 
                         <motion.div

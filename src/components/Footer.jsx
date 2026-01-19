@@ -43,6 +43,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link href="/customize" className="text-sm hover:text-lavender-500 transition-colors duration-300">
+                  Customize
+                </Link>
+              </li>
+              <li>
+                <Link href="/book-class" className="text-sm hover:text-lavender-500 transition-colors duration-300">
+                  Book a Class
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className="text-sm hover:text-lavender-500 transition-colors duration-300">
                   About Us
                 </Link>
@@ -100,9 +110,20 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center space-y-2">
           <p className="text-sm">
             © {new Date().getFullYear()} Luxe Candles. All rights reserved.
+          </p>
+          <p className="text-xs text-gray-500">
+            Developed by{' '}
+            <a
+              href="https://byterings.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lavender-500 hover:text-lavender-400 transition-colors duration-300"
+            >
+              Byterings
+            </a>
           </p>
         </div>
       </div>

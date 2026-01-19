@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Loader2 } from 'lucide-react';
+import { ShoppingBag, Loader2, FileDown } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useUser } from '@/context/UserContext';
+import { downloadInvoice } from '@/lib/generateInvoice';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -133,6 +134,33 @@ export default function CheckoutPage() {
 
       // Order created successfully
       toast.success('Order placed successfully!');
+
+      // Generate and download invoice
+      const invoiceData = {
+        id: data.id,
+        number: data.order_number || data.id,
+        status: 'pending',
+        date_created: new Date().toISOString(),
+        billing: orderData.billing_address,
+        shipping: orderData.shipping_address,
+        line_items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: (item.price * item.quantity).toFixed(2),
+        })),
+        subtotal: cartTotal.toFixed(2),
+        shipping_total: '0',
+        total_tax: '0',
+        total: cartTotal.toFixed(2),
+        currency_symbol: items[0]?.currencySymbol || '₹',
+        payment_method_title: 'Cash on Delivery (COD)',
+        customer_note: orderNotes,
+      };
+
+      // Auto-download invoice
+      downloadInvoice(invoiceData);
+      toast.success('Invoice downloaded!');
 
       // Clear the cart
       clearCart();

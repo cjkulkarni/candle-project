@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import Pagination from '@/components/Pagination';
@@ -12,6 +13,9 @@ import {
 } from "@/components/ui/accordion"
 
 export default function Shop() {
+  const searchParams = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [debouncedPriceRange, setDebouncedPriceRange] = useState([0, 10000]);
@@ -31,6 +35,13 @@ export default function Shop() {
     hasMore: false,
   });
 
+  // Set category from URL on mount
+  useEffect(() => {
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    }
+  }, [categoryFromUrl]);
+
   // Debounce price range changes
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -48,18 +59,15 @@ export default function Shop() {
       setError(null);
 
       try {
-        // Build query string with all filters
+        // Build query string with filters (excluding category - we filter client-side by name)
         // Convert price from rupees to paise (multiply by 100) for WooCommerce API
         const queryParams = new URLSearchParams({
           page: currentPage.toString(),
+          perPage: '50', // Fetch more products to allow client-side filtering
           sortBy: sortBy,
           minPrice: (debouncedPriceRange[0] * 100).toString(),
           maxPrice: (debouncedPriceRange[1] * 100).toString(),
         });
-
-        if (selectedCategory !== 'All') {
-          queryParams.append('category', selectedCategory);
-        }
 
         const response = await fetch(`/api/products?${queryParams.toString()}`);
         const data = await response.json();
@@ -74,6 +82,7 @@ export default function Shop() {
           name: product.name,
           slug: product.slug,
           category: product.categories?.[0]?.name || 'Uncategorized',
+          allCategories: product.categories || [],
           tags: product.tags || [],
           // Convert price from minor units (paise) to major units (rupees)
           price_html: product?.price_html,
@@ -88,14 +97,35 @@ export default function Shop() {
           sale: product.on_sale || false,
         }));
 
-        setProducts(transformedProducts);
-        setPaginationMeta(data.meta);
-
-        // Extract unique categories from products (only on first load)
+        // Extract unique categories from all products (before filtering)
         if (categories.length === 1) {
-          const uniqueCategories = [...new Set(transformedProducts.map(p => p.category).filter(c => c !== 'Uncategorized'))];
-          setCategories(['All', ...uniqueCategories]);
+          const categorySet = new Set();
+          transformedProducts.forEach(p => {
+            p.allCategories?.forEach(cat => {
+              if (cat.name && cat.name !== 'Uncategorized') {
+                categorySet.add(cat.name);
+              }
+            });
+          });
+          setCategories(['All', ...Array.from(categorySet).sort()]);
         }
+
+        // Filter by category client-side (by name, checking all categories a product belongs to)
+        let filteredProducts = transformedProducts;
+        if (selectedCategory !== 'All') {
+          filteredProducts = transformedProducts.filter(product =>
+            product.allCategories?.some(cat =>
+              cat.name?.toLowerCase() === selectedCategory.toLowerCase()
+            )
+          );
+        }
+
+        setProducts(filteredProducts);
+        setPaginationMeta({
+          ...data.meta,
+          total: filteredProducts.length,
+          totalPages: Math.ceil(filteredProducts.length / 12),
+        });
 
       } catch (err) {
         console.error('Error fetching products:', err);
