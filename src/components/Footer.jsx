@@ -16,13 +16,31 @@ const Footer = () => {
               Premium handcrafted candles that transform your space into a sanctuary of warmth and elegance.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-lavender-500 transition-colors duration-300">
+              <a
+                href="https://facebook.com/luxecandles"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-lavender-500 transition-colors duration-300"
+                aria-label="Follow us on Facebook"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="hover:text-lavender-500 transition-colors duration-300">
+              <a
+                href="https://instagram.com/luxecandles"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-lavender-500 transition-colors duration-300"
+                aria-label="Follow us on Instagram"
+              >
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="hover:text-lavender-500 transition-colors duration-300">
+              <a
+                href="https://twitter.com/luxecandles"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-lavender-500 transition-colors duration-300"
+                aria-label="Follow us on Twitter"
+              >
                 <Twitter className="w-5 h-5" />
               </a>
             </div>
@@ -70,24 +88,24 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Customer Service</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm hover:text-lavender-500 transition-colors duration-300">
+                <Link href="/shipping" className="text-sm hover:text-lavender-500 transition-colors duration-300">
                   Shipping Info
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm hover:text-lavender-500 transition-colors duration-300">
+                <Link href="/returns" className="text-sm hover:text-lavender-500 transition-colors duration-300">
                   Returns
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm hover:text-lavender-500 transition-colors duration-300">
+                <Link href="/faq" className="text-sm hover:text-lavender-500 transition-colors duration-300">
                   FAQ
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm hover:text-lavender-500 transition-colors duration-300">
+                <Link href="/privacy-policy" className="text-sm hover:text-lavender-500 transition-colors duration-300">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

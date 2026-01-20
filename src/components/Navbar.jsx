@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ShoppingCart, User, Menu, X, Search, LogOut, Settings } from 'lucide-react';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from '@/context/CartContext';
 import { useUser } from '@/context/UserContext';
 import {
@@ -18,11 +18,78 @@ import {
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
 
   const { cartCount, toggleCart, isOpen } = useCart();
   const { user, logout, isAuthenticated } = useUser();
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        const data = await res.json();
+        if (data.success) {
+          setSearchResults(data.data.slice(0, 5)); // Show max 5 results
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+      setSearchResults([]);
+    }
+  };
+
+  const handleResultClick = (slug) => {
+    router.push(`/product/${slug}`);
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,9 +151,77 @@ const Navbar = () => {
 
             {/* Right Icons */}
             <div className="flex items-center space-x-6">
-              <button className="text-gray-700 hover:text-lavender-700 transition-colors duration-300">
-                <Search className="w-5 h-5" />
-              </button>
+              {/* Search */}
+              <div className="relative" ref={searchContainerRef}>
+                <button
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  className="text-gray-700 hover:text-lavender-700 transition-colors duration-300"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+
+                {/* Search Dropdown */}
+                <AnimatePresence>
+                  {isSearchOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+                    >
+                      <form onSubmit={handleSearchSubmit} className="p-3">
+                        <div className="relative">
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search products..."
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-lavender-500 focus:ring-1 focus:ring-lavender-500 text-sm"
+                          />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                      </form>
+
+                      {/* Search Results - Only show when there are results */}
+                      {!isSearching && searchResults.length > 0 && (
+                        <div className="border-t border-gray-100">
+                          {searchResults.map((product) => (
+                            <button
+                              key={product.id}
+                              onClick={() => handleResultClick(product.slug)}
+                              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
+                            >
+                              {product.images?.[0]?.src && (
+                                <img
+                                  src={product.images[0].src}
+                                  alt={product.name}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {product.name}
+                                </p>
+                                <p className="text-xs text-lavender-600">
+                                  ₹{product.price}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                          <button
+                            onClick={handleSearchSubmit}
+                            className="w-full px-4 py-2 text-sm text-lavender-600 hover:bg-lavender-50 border-t border-gray-100 transition-colors"
+                          >
+                            View all results
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* User Dropdown */}
               {isAuthenticated ? (

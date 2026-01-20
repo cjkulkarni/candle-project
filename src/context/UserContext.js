@@ -63,12 +63,12 @@ export function UserProvider({ children }) {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, recaptchaToken = null) => {
     setIsLoading(true);
     setError(null);
     try {
       // Call WordPress API
-      const response = await wpApiClient.login(email, password);
+      const response = await wpApiClient.login(email, password, recaptchaToken);
       // Store token and user
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));

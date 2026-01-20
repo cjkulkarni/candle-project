@@ -5,8 +5,10 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, MapPin, CheckCircle, GraduationCap, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function BookClass() {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -76,12 +78,25 @@ export default function BookClass() {
     setIsSubmitting(true);
 
     try {
+      // Get reCAPTCHA token
+      let recaptchaToken = null;
+      if (executeRecaptcha) {
+        try {
+          recaptchaToken = await executeRecaptcha('book_class');
+        } catch (recaptchaError) {
+          console.error('reCAPTCHA error:', recaptchaError);
+        }
+      }
+
       const response = await fetch('/api/book-class', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          recaptchaToken,
+        }),
       });
 
       const result = await response.json();

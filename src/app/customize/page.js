@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, X, Palette, Flame, Package, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function CustomizeCandle() {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -69,6 +71,12 @@ export default function CustomizeCandle() {
     setIsSubmitting(true);
 
     try {
+      // Get reCAPTCHA token
+      let recaptchaToken = '';
+      if (executeRecaptcha) {
+        recaptchaToken = await executeRecaptcha('customize');
+      }
+
       // Create FormData for file upload
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
@@ -77,6 +85,9 @@ export default function CustomizeCandle() {
       images.forEach((img, index) => {
         submitData.append(`image_${index}`, img.file);
       });
+
+      // Add reCAPTCHA token
+      submitData.append('recaptchaToken', recaptchaToken);
 
       const response = await fetch('/api/customize', {
         method: 'POST',

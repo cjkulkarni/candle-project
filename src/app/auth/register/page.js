@@ -8,10 +8,12 @@ import { Mail, Lock, User, Phone, Eye, EyeOff, Loader, CheckCircle2 } from 'luci
 import { useUser } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isLoading } = useUser();
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -84,12 +86,23 @@ export default function RegisterPage() {
     }
 
     try {
+      // Get reCAPTCHA token
+      let recaptchaToken = null;
+      if (executeRecaptcha) {
+        try {
+          recaptchaToken = await executeRecaptcha('register');
+        } catch (recaptchaError) {
+          console.error('reCAPTCHA error:', recaptchaError);
+        }
+      }
+
       await register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
+        recaptchaToken,
       });
       toast.success('Account created successfully! Redirecting to your profile...');
       router.push('/profile');

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL ;
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email, username, password } = body;
+    const { email, username, password, recaptchaToken } = body;
 
     // Accept either email or username
     const user = email || username;
@@ -13,6 +14,16 @@ export async function POST(request) {
     if (!user || !password) {
       return NextResponse.json(
         { error: 'Email/Username and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify reCAPTCHA token
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'login');
+    if (!recaptchaResult.success && !recaptchaResult.skipped) {
+      console.error('reCAPTCHA verification failed:', recaptchaResult.error);
+      return NextResponse.json(
+        { error: 'Security verification failed. Please try again.' },
         { status: 400 }
       );
     }

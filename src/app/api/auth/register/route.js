@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL;
 const WC_CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY || '';
@@ -24,11 +25,22 @@ export async function POST(request) {
       city,
       zipCode,
       country,
+      recaptchaToken,
     } = body;
     const username = email;
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Verify reCAPTCHA token
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'register');
+    if (!recaptchaResult.success && !recaptchaResult.skipped) {
+      console.error('reCAPTCHA verification failed:', recaptchaResult.error);
+      return NextResponse.json(
+        { error: 'Security verification failed. Please try again.' },
         { status: 400 }
       );
     }

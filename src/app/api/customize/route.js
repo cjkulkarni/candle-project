@@ -1,11 +1,28 @@
 /**
  * API Route: POST /api/customize
- * Handles custom candle requests - stores data and sends email notification
+ * Handles custom candle requests - sends data to WordPress for email notification
  */
+
+import { verifyRecaptcha } from '@/lib/recaptcha';
+
+const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL;
 
 export async function POST(request) {
   try {
     const formData = await request.formData();
+
+    // Extract reCAPTCHA token
+    const recaptchaToken = formData.get('recaptchaToken');
+
+    // Verify reCAPTCHA token
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, 'customize');
+    if (!recaptchaResult.success && !recaptchaResult.skipped) {
+      console.error('reCAPTCHA verification failed:', recaptchaResult.error);
+      return Response.json({
+        success: false,
+        message: 'Security verification failed. Please try again.',
+      }, { status: 400 });
+    }
 
     // Extract form fields
     const data = {
@@ -22,7 +39,7 @@ export async function POST(request) {
       submittedAt: new Date().toISOString(),
     };
 
-    // Collect uploaded images (if any)
+    // Collect uploaded images info (if any)
     const images = [];
     for (let i = 0; i < 5; i++) {
       const image = formData.get(`image_${i}`);
@@ -35,40 +52,64 @@ export async function POST(request) {
       }
     }
 
-    // Log the request (in production, you would save to database and send email)
+    // Add images info to data
+    data.imagesCount = images.length;
+    data.imageNames = images.map(img => img.name).join(', ') || 'None';
+
+    // Log the request
     console.log('Custom Candle Request:', {
       ...data,
       imagesCount: images.length,
-      images: images.map(img => img.name),
     });
 
-    // Here you would typically:
-    // 1. Save to database
-    // 2. Send email notification to admin
-    // 3. Send confirmation email to customer
+    // Send to WordPress for email notification
+    try {
+      const wpResponse = await fetch(`${WORDPRESS_API_URL}/wp-json/luxe/v1/customize-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-    // For now, we'll simulate a successful submission
-    // In production, integrate with your email service (SendGrid, Nodemailer, etc.)
+      const wpResult = await wpResponse.json();
 
-    /*
-    // Example email integration with WordPress/WooCommerce:
-    const emailResponse = await fetch(`${process.env.WORDPRESS_API_URL}/wp-json/custom/v1/send-customize-request`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    */
+      if (wpResponse.ok && wpResult.success) {
+        return Response.json({
+          success: true,
+          message: 'Custom candle request submitted successfully! We will contact you soon.',
+          data: {
+            requestId: wpResult.requestId || `CUS-${Date.now()}`,
+            ...data,
+          },
+        }, { status: 200 });
+      } else {
+        // WordPress call failed, but still return success to user
+        // Log the error for debugging
+        console.error('WordPress email notification failed:', wpResult);
 
-    return Response.json({
-      success: true,
-      message: 'Custom candle request submitted successfully',
-      data: {
-        requestId: `CUS-${Date.now()}`,
-        ...data,
-      },
-    }, { status: 200 });
+        return Response.json({
+          success: true,
+          message: 'Custom candle request submitted successfully! We will contact you soon.',
+          data: {
+            requestId: `CUS-${Date.now()}`,
+            ...data,
+          },
+        }, { status: 200 });
+      }
+    } catch (wpError) {
+      // WordPress endpoint not available, still accept the request
+      console.error('WordPress API error:', wpError.message);
+
+      return Response.json({
+        success: true,
+        message: 'Custom candle request submitted successfully! We will contact you soon.',
+        data: {
+          requestId: `CUS-${Date.now()}`,
+          ...data,
+        },
+      }, { status: 200 });
+    }
 
   } catch (error) {
     console.error('Error processing customize request:', error);

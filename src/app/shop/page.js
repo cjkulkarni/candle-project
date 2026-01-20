@@ -16,8 +16,10 @@ import {
 function ShopContent() {
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams.get('category');
+  const searchFromUrl = searchParams.get('search');
 
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [debouncedPriceRange, setDebouncedPriceRange] = useState([0, 10000]);
   const [sortBy, setSortBy] = useState('featured');
@@ -42,6 +44,13 @@ function ShopContent() {
       setSelectedCategory(categoryFromUrl);
     }
   }, [categoryFromUrl]);
+
+  // Set search query from URL on mount
+  useEffect(() => {
+    if (searchFromUrl) {
+      setSearchQuery(searchFromUrl);
+    }
+  }, [searchFromUrl]);
 
   // Debounce price range changes
   useEffect(() => {
@@ -121,6 +130,15 @@ function ShopContent() {
           );
         }
 
+        // Filter by search query
+        if (searchQuery.trim()) {
+          const query = searchQuery.toLowerCase();
+          filteredProducts = filteredProducts.filter(product =>
+            product.name.toLowerCase().includes(query) ||
+            product.description?.toLowerCase().includes(query)
+          );
+        }
+
         setProducts(filteredProducts);
         setPaginationMeta({
           ...data.meta,
@@ -137,7 +155,7 @@ function ShopContent() {
     };
 
     fetchProducts();
-  }, [currentPage, selectedCategory, debouncedPriceRange, sortBy]);
+  }, [currentPage, selectedCategory, debouncedPriceRange, sortBy, searchQuery]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -163,6 +181,22 @@ function ShopContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl md:text-6xl font-serif font-bold text-gray-900 mb-4">Our Collection</h1>
           <p className="text-lg text-gray-600">Discover our handcrafted luxury candles</p>
+
+          {/* Search indicator */}
+          {searchQuery && (
+            <div className="mt-4 inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+              <span className="text-gray-600">Searching for:</span>
+              <span className="font-medium text-lavender-700">"{searchQuery}"</span>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="ml-2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

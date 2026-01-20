@@ -1,11 +1,25 @@
 /**
  * API Route: POST /api/book-class
- * Handles candle-making class bookings - stores data and sends email notification
+ * Handles candle-making class bookings - sends data to WordPress for email notification
  */
+
+import { verifyRecaptcha } from '@/lib/recaptcha';
+
+const WORDPRESS_API_URL = process.env.WORDPRESS_API_URL;
 
 export async function POST(request) {
   try {
     const data = await request.json();
+
+    // Verify reCAPTCHA token
+    const recaptchaResult = await verifyRecaptcha(data.recaptchaToken, 'book_class');
+    if (!recaptchaResult.success && !recaptchaResult.skipped) {
+      console.error('reCAPTCHA verification failed:', recaptchaResult.error);
+      return Response.json({
+        success: false,
+        message: 'Security verification failed. Please try again.',
+      }, { status: 400 });
+    }
 
     // Validate required fields
     if (!data.name || !data.email || !data.classType || !data.preferredDate) {
@@ -15,7 +29,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Class pricing (in production, fetch from database)
+    // Class pricing
     const classPricing = {
       beginner: 1500,
       intermediate: 2500,
@@ -35,44 +49,62 @@ export async function POST(request) {
       name: data.name,
       email: data.email,
       phone: data.phone || 'Not provided',
-      classType: data.classType,
-      className: classNames[data.classType] || data.classType,
+      classType: classNames[data.classType] || data.classType,
+      classPrice: classPricing[data.classType] || 0,
       preferredDate: data.preferredDate,
       preferredTime: data.preferredTime || 'To be confirmed',
       participants: parseInt(data.participants) || 1,
       experience: data.experience || 'beginner',
-      specialRequirements: data.specialRequirements || 'None',
-      pricePerPerson: classPricing[data.classType] || 0,
+      specialRequests: data.specialRequirements || 'None',
       totalPrice: (classPricing[data.classType] || 0) * (parseInt(data.participants) || 1),
       status: 'pending',
       submittedAt: new Date().toISOString(),
     };
 
-    // Log the booking (in production, save to database and send email)
+    // Log the booking
     console.log('Class Booking Request:', bookingData);
 
-    // Here you would typically:
-    // 1. Save booking to database
-    // 2. Send confirmation email to customer
-    // 3. Send notification email to admin
-    // 4. Integrate with calendar system
+    // Send to WordPress for email notification
+    try {
+      const wpResponse = await fetch(`${WORDPRESS_API_URL}/wp-json/luxe/v1/book-class`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
 
-    /*
-    // Example email integration with WordPress:
-    const emailResponse = await fetch(`${process.env.WORDPRESS_API_URL}/wp-json/custom/v1/send-class-booking`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bookingData),
-    });
-    */
+      const wpResult = await wpResponse.json();
 
-    return Response.json({
-      success: true,
-      message: 'Class booking submitted successfully',
-      data: bookingData,
-    }, { status: 200 });
+      if (wpResponse.ok && wpResult.success) {
+        return Response.json({
+          success: true,
+          message: 'Class booking submitted successfully! We will contact you to confirm your slot.',
+          data: {
+            ...bookingData,
+            bookingId: wpResult.bookingId || bookingData.bookingId,
+          },
+        }, { status: 200 });
+      } else {
+        // WordPress call failed, but still return success to user
+        console.error('WordPress email notification failed:', wpResult);
+
+        return Response.json({
+          success: true,
+          message: 'Class booking submitted successfully! We will contact you to confirm your slot.',
+          data: bookingData,
+        }, { status: 200 });
+      }
+    } catch (wpError) {
+      // WordPress endpoint not available, still accept the booking
+      console.error('WordPress API error:', wpError.message);
+
+      return Response.json({
+        success: true,
+        message: 'Class booking submitted successfully! We will contact you to confirm your slot.',
+        data: bookingData,
+      }, { status: 200 });
+    }
 
   } catch (error) {
     console.error('Error processing class booking:', error);

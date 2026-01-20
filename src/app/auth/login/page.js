@@ -8,10 +8,12 @@ import { Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading } = useUser();
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -60,7 +62,17 @@ export default function LoginPage() {
     }
 
     try {
-      await login(formData.email, formData.password);
+      // Get reCAPTCHA token
+      let recaptchaToken = null;
+      if (executeRecaptcha) {
+        try {
+          recaptchaToken = await executeRecaptcha('login');
+        } catch (recaptchaError) {
+          console.error('reCAPTCHA error:', recaptchaError);
+        }
+      }
+
+      await login(formData.email, formData.password, recaptchaToken);
       toast.success('Login successful! Redirecting to your profile...');
       router.push('/profile');
     } catch (error) {

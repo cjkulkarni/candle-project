@@ -19,9 +19,10 @@ export const wpApiClient = {
    * Login user with email and password
    * @param {string} email - User email or username
    * @param {string} password - User password
+   * @param {string} recaptchaToken - reCAPTCHA token (optional)
    * @returns {Promise} { token, user }
    */
-  login: async (email, password) => {
+  login: async (email, password, recaptchaToken = null) => {
     try {
       const response = await fetch(ENDPOINTS.LOGIN, {
         method: 'POST',
@@ -31,6 +32,7 @@ export const wpApiClient = {
         body: JSON.stringify({
           email,
           password,
+          recaptchaToken,
         }),
       });
 
@@ -114,6 +116,7 @@ export const wpApiClient = {
           city: userData.city,
           zipCode: userData.zipCode,
           country: userData.country,
+          recaptchaToken: userData.recaptchaToken,
         }),
       });
 
